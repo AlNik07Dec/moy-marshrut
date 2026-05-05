@@ -71,4 +71,34 @@ final class WalkViewModelTests: XCTestCase {
         vm.selectedMode = .fast
         XCTAssertEqual(vm.selectedMode, .fast)
     }
+
+    func testFormattedTimeZero() {
+        let vm = WalkViewModel()
+        XCTAssertEqual(vm.formattedTime, "00:00")
+    }
+
+    func testFormattedTimeMinutes() {
+        let vm = WalkViewModel()
+        vm.elapsedSeconds = 125
+        XCTAssertEqual(vm.formattedTime, "02:05")
+    }
+
+    func testFormattedTimeHours() {
+        let vm = WalkViewModel()
+        vm.elapsedSeconds = 3665
+        XCTAssertEqual(vm.formattedTime, "1:01:05")
+    }
+
+    func testDistanceCalculation() {
+        let loc1 = CLLocation(latitude: 55.7558, longitude: 37.6176)
+        let loc2 = CLLocation(latitude: 55.7608, longitude: 37.6176)
+        let distance = WalkViewModel.calculateDistance(from: loc1, to: loc2)
+        XCTAssertGreaterThan(distance, 500)
+        XCTAssertLessThan(distance, 620)
+    }
+
+    func testSpeedKmhCalculation() {
+        let speed = WalkViewModel.calculateSpeed(deltaMeters: 10, deltaSeconds: 1)
+        XCTAssertEqual(speed, 36.0, accuracy: 0.1)
+    }
 }
