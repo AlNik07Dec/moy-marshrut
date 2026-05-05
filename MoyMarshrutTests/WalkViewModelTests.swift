@@ -59,4 +59,16 @@ final class WalkViewModelTests: XCTestCase {
         let service = LocationService()
         XCTAssertNotNil(service)
     }
+
+    func testHomeViewModelDefaultMode() {
+        let vm = HomeViewModel()
+        XCTAssertEqual(vm.selectedMode, .slow)
+        XCTAssertFalse(vm.isWalkActive)
+    }
+
+    func testHomeViewModelSelectMode() {
+        let vm = HomeViewModel()
+        vm.selectedMode = .fast
+        XCTAssertEqual(vm.selectedMode, .fast)
+    }
 }
