@@ -54,4 +54,9 @@ final class WalkViewModelTests: XCTestCase {
                                   routeCoordinates: [])
         XCTAssertEqual(session.formattedDuration, "12 мин")
     }
+
+    func testLocationServiceInitialStatus() {
+        let service = LocationService()
+        XCTAssertNotNil(service)
+    }
 }
