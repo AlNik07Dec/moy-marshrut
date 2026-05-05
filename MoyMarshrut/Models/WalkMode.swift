@@ -1,3 +1,5 @@
+import Foundation
+
 enum WalkMode: String, Codable, CaseIterable, Identifiable {
     case fast
     case slow

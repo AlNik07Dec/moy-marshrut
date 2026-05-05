@@ -1,6 +1,6 @@
 import CoreLocation
 
-struct Coordinate: Codable, Hashable {
+struct Coordinate: Codable {
     let latitude: Double
     let longitude: Double
 
