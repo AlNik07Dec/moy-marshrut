@@ -16,6 +16,7 @@ targets:
       properties:
         CFBundleDisplayName: "Мой маршрут"
         NSLocationWhenInUseUsageDescription: "Нужно для отслеживания маршрута прогулки"
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Нужно для отслеживания маршрута прогулки"
         UILaunchScreen:
           UIColorName: ""
           UIImageName: ""
@@ -32,3 +33,12 @@ targets:
       - target: MoyMarshrut
     settings:
       SWIFT_VERSION: "5.9"
+schemes:
+  MoyMarshrut:
+    build:
+      targets:
+        MoyMarshrut: all
+        MoyMarshrutTests: [test]
+    test:
+      targets:
+        - MoyMarshrutTests
