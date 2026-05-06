@@ -8,7 +8,7 @@ import {
   Pressable,
   Dimensions,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { BarChart } from 'react-native-chart-kit';
 import { useHistoryStore, HistoryFilter, DayGroup } from '@/stores/historyStore';
 import { WalkSession } from '@/db/database';
@@ -48,10 +48,14 @@ function FilterButton({
 }
 
 function SessionRow({ session }: { session: WalkSession }) {
+  const router = useRouter();
   const km = (session.distanceMeters / 1000).toFixed(2);
   return (
-    <View style={styles.sessionRow}>
-      <View>
+    <Pressable
+      style={({ pressed }) => [styles.sessionRow, pressed && styles.sessionRowPressed]}
+      onPress={() => router.push(`/session/${session.id}`)}
+    >
+      <View style={styles.sessionLeft}>
         <Text style={styles.sessionMode}>{MODE_LABEL[session.mode] ?? session.mode}</Text>
         <Text style={styles.sessionDuration}>{formatDuration(session.durationSeconds)}</Text>
       </View>
@@ -61,7 +65,8 @@ function SessionRow({ session }: { session: WalkSession }) {
           <Text style={styles.sessionSteps}>{session.stepCount} шагов</Text>
         )}
       </View>
-    </View>
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
   );
 }
 
@@ -223,18 +228,20 @@ const styles = StyleSheet.create({
   },
   sessionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#E5E5EA',
   },
+  sessionRowPressed: { backgroundColor: '#F2F2F7' },
+  sessionLeft: { flex: 1 },
   sessionMode: { fontSize: 15, fontWeight: '600', color: '#1C1C1E' },
   sessionDuration: { fontSize: 13, color: '#8E8E93', marginTop: 2 },
-  sessionStats: { alignItems: 'flex-end' },
+  sessionStats: { alignItems: 'flex-end', marginRight: 8 },
   sessionDistance: { fontSize: 17, fontWeight: '700', color: '#34C759' },
   sessionSteps: { fontSize: 17, fontWeight: '700', color: '#007AFF', marginTop: 2 },
+  chevron: { fontSize: 20, color: '#C7C7CC', fontWeight: '300' },
   emptyIcon: { fontSize: 56 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1C1C1E' },
   emptySub: { fontSize: 14, color: '#8E8E93', textAlign: 'center', paddingHorizontal: 32 },
