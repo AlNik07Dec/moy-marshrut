@@ -9,6 +9,7 @@ import {
   Dimensions,
   Platform,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 // @ts-ignore
@@ -38,6 +39,10 @@ const S = {
   addReminder:
     '\u002b \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u0435',
   deleteChar: '\u2715',
+  scheduleErrorTitle: '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435',
+  scheduleErrorBody:
+    '\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437 \u0438\u043b\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u0438\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.',
+  ok: 'OK',
 };
 
 const PIE_COLORS = {
@@ -107,18 +112,23 @@ export default function StatsScreen() {
     pickerDate.setHours(18, 0, 0, 0);
   }
 
-  const onTimeChange = (_event: DateTimePickerEvent, selected?: Date) => {
+  const onTimeChange = async (_event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS !== 'ios') setPickerMode(null);
     if (!selected) return;
     const h = selected.getHours();
     const m = selected.getMinutes();
+    const mode = pickerMode;
 
-    if (pickerMode?.type === 'add') {
-      addReminder(h, m);
-      setPickerMode(null);
-    } else if (pickerMode?.type === 'edit' && pickerMode.id) {
-      setReminderTime(pickerMode.id, h, m);
-      if (Platform.OS === 'ios') setPickerMode(null);
+    try {
+      if (mode?.type === 'add') {
+        await addReminder(h, m);
+        setPickerMode(null);
+      } else if (mode?.type === 'edit' && mode.id) {
+        await setReminderTime(mode.id, h, m);
+        if (Platform.OS === 'ios') setPickerMode(null);
+      }
+    } catch {
+      Alert.alert(S.scheduleErrorTitle, S.scheduleErrorBody, [{ text: S.ok }]);
     }
   };
 
@@ -227,17 +237,20 @@ export default function StatsScreen() {
             <Text style={styles.addBtnText}>{S.addReminder}</Text>
           </TouchableOpacity>
         )}
-      </View>
 
-      {pickerMode !== null && (
-        <DateTimePicker
-          value={pickerDate}
-          mode="time"
-          is24Hour
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onTimeChange}
-        />
-      )}
+        {pickerMode !== null && (
+          <View style={styles.pickerWrap}>
+            <DateTimePicker
+              value={pickerDate}
+              mode="time"
+              is24Hour
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onTimeChange}
+              style={Platform.OS === 'ios' ? styles.pickerIos : styles.pickerAndroid}
+            />
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -323,5 +336,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#007AFF',
     fontWeight: '500',
+  },
+  pickerWrap: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  pickerIos: {
+    width: SCREEN_WIDTH - 64,
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
+  pickerAndroid: {
+    width: '100%',
   },
 });
