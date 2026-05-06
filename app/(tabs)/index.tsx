@@ -6,6 +6,12 @@ import { useRouter } from 'expo-router';
 import { useWalkStore, WALK_MODES } from '@/stores/walkStore';
 import { ModeButton } from '@/components/ModeButton';
 
+const START_LABEL: Record<string, string> = {
+  fast: '▶  Старт пробежки',
+  slow: '▶  Старт прогулки',
+  parkGame: '▶  Старт игры в парке',
+};
+
 export default function HomeScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
@@ -71,7 +77,7 @@ export default function HomeScreen() {
 
       <View style={styles.startButtonWrapper}>
         <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
-          <Text style={styles.startButtonText}>▶  Старт прогулки</Text>
+          <Text style={styles.startButtonText}>{START_LABEL[selectedMode]}</Text>
         </TouchableOpacity>
       </View>
     </View>

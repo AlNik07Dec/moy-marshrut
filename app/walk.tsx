@@ -24,6 +24,12 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+const FINISH_LABEL: Record<string, string> = {
+  fast: '⏹  Завершить пробежку',
+  slow: '⏹  Завершить прогулку',
+  parkGame: '⏹  Завершить игру в парке',
+};
+
 export default function WalkScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
@@ -136,7 +142,7 @@ export default function WalkScreen() {
       {/* Finish button */}
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.finishButton} onPress={handleFinish} activeOpacity={0.85}>
-          <Text style={styles.finishButtonText}>⏹  Завершить прогулку</Text>
+          <Text style={styles.finishButtonText}>{FINISH_LABEL[selectedMode]}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
