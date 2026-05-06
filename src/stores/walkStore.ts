@@ -25,6 +25,7 @@ interface WalkState {
   distanceMeters: number;
   speedKmh: number;
   stepCount: number;
+  startTime: number | null;
 
   // Actions
   setMode: (mode: WalkMode) => void;
@@ -57,6 +58,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   distanceMeters: 0,
   speedKmh: 0,
   stepCount: 0,
+  startTime: null,
 
   setMode: (mode) => set({ selectedMode: mode }),
 
@@ -69,6 +71,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       distanceMeters: 0,
       speedKmh: 0,
       stepCount: 0,
+      startTime: Date.now(),
     }),
 
   addCoordinate: (coord) => {
@@ -99,7 +102,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   setStepCount: (steps) => set({ stepCount: steps }),
 
   finishWalk: async () => {
-    const { selectedMode, routeCoordinates, distanceMeters, elapsedSeconds, stepCount, startCoordinate } =
+    const { selectedMode, routeCoordinates, distanceMeters, elapsedSeconds, stepCount, startCoordinate, startTime } =
       get();
 
     const endCoord =
@@ -109,6 +112,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
 
     await insertSession({
       date: Date.now(),
+      startTime: startTime ?? null,
       mode: selectedMode,
       distanceMeters,
       durationSeconds: elapsedSeconds,
@@ -131,5 +135,6 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       distanceMeters: 0,
       speedKmh: 0,
       stepCount: 0,
+      startTime: null,
     }),
 }));
