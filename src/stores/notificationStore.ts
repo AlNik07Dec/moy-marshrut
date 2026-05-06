@@ -31,8 +31,11 @@ export const useNotificationStore = create<NotificationState>()(
           await scheduleDaily(hour, minute);
           set({ enabled: true });
         } else {
-          await cancelAll();
-          set({ enabled: false });
+          try {
+            await cancelAll();
+          } finally {
+            set({ enabled: false });
+          }
         }
       },
 
