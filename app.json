@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Мой маршрут",
+    "slug": "moy-marshrut",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.myroute.moymarshrut",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.myroute.moymarshrut"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Нужно для отслеживания маршрута прогулки"
+        }
+      ]
+    ],
+    "scheme": "moymarshrut",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
