@@ -21,22 +21,43 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 32;
 const MAX_REMINDERS = 5;
 
+/** Russian strings via Unicode escapes (ASCII source file). */
+const S = {
+  km: '\u043a\u043c',
+  walks: '\u043f\u0440\u043e\u0433\u0443\u043b\u043e\u043a',
+  timeNoun: '\u0432\u0440\u0435\u043c\u044f',
+  modeFast: '\u041f\u0440\u043e\u0431\u0435\u0436\u043a\u0430',
+  modeSlow: '\u041f\u0440\u043e\u0433\u0443\u043b\u043a\u0430',
+  modePark: '\u0418\u0433\u0440\u0430 \u0432 \u043f\u0430\u0440\u043a\u0435',
+  byModes: '\u041f\u043e \u0440\u0435\u0436\u0438\u043c\u0430\u043c',
+  noWalksWeek:
+    '\u041d\u0435\u0442 \u043f\u0440\u043e\u0433\u0443\u043b\u043e\u043a \u0437\u0430 \u044d\u0442\u0443 \u043d\u0435\u0434\u0435\u043b\u044e',
+  distanceWeek:
+    '\u0414\u0438\u0441\u0442\u0430\u043d\u0446\u0438\u044f \u0437\u0430 \u043d\u0435\u0434\u0435\u043b\u044e',
+  reminders: '\u041d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u044f',
+  addReminder:
+    '\u002b \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u0435',
+  deleteChar: '\u2715',
+};
+
 const PIE_COLORS = {
   fast: '#e94560',
   slow: '#4f8ef7',
   parkGame: '#4CAF50',
 };
 
-const MODE_LABELS = {
-  fast: '????????',
-  slow: '????????',
-  parkGame: '???? ? ?????',
+const MODE_LABELS: Record<keyof typeof PIE_COLORS, string> = {
+  fast: S.modeFast,
+  slow: S.modeSlow,
+  parkGame: S.modePark,
 };
 
 function formatHours(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}? ${m}???` : `${m}???`;
+  const ch = '\u0447';
+  const min = '\u043c\u0438\u043d';
+  return h > 0 ? `${h}${ch} ${m}${min}` : `${m}${min}`;
 }
 
 function padTwo(n: number): string {
@@ -103,25 +124,23 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{stats.totalKm.toFixed(1)}</Text>
-          <Text style={styles.summaryLabel}>??</Text>
+          <Text style={styles.summaryLabel}>{S.km}</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{stats.totalWalks}</Text>
-          <Text style={styles.summaryLabel}>????????</Text>
+          <Text style={styles.summaryLabel}>{S.walks}</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{formatHours(stats.totalSeconds)}</Text>
-          <Text style={styles.summaryLabel}>?????</Text>
+          <Text style={styles.summaryLabel}>{S.timeNoun}</Text>
         </View>
       </View>
 
-      {/* Pie chart */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>?? ???????</Text>
+        <Text style={styles.sectionTitle}>{S.byModes}</Text>
         {hasData ? (
           <PieChart
             data={pieData}
@@ -138,15 +157,14 @@ export default function StatsScreen() {
           />
         ) : (
           <View style={styles.emptyChart}>
-            <Text style={styles.emptyText}>??? ???????? ?? ??? ??????</Text>
+            <Text style={styles.emptyText}>{S.noWalksWeek}</Text>
           </View>
         )}
       </View>
 
-      {/* Line chart */}
       {hasDistanceData && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>????????? ?? ??????</Text>
+          <Text style={styles.sectionTitle}>{S.distanceWeek}</Text>
           <LineChart
             data={{
               labels: stats.dayLabels,
@@ -154,7 +172,7 @@ export default function StatsScreen() {
             }}
             width={CHART_WIDTH}
             height={160}
-            yAxisSuffix=" ??"
+            yAxisSuffix={` ${S.km}`}
             chartConfig={{
               backgroundColor: '#fff',
               backgroundGradientFrom: '#fff',
@@ -172,9 +190,8 @@ export default function StatsScreen() {
         </View>
       )}
 
-      {/* Reminders */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>???????????</Text>
+        <Text style={styles.sectionTitle}>{S.reminders}</Text>
 
         {reminders.map((reminder: Reminder) => (
           <View key={reminder.id} style={styles.reminderRow}>
@@ -188,7 +205,9 @@ export default function StatsScreen() {
             </Pressable>
             <Switch
               value={reminder.enabled}
-              onValueChange={(v) => { toggleReminder(reminder.id, v); }}
+              onValueChange={(v) => {
+                toggleReminder(reminder.id, v);
+              }}
               trackColor={{ false: '#E5E5EA', true: '#34C759' }}
               thumbColor="#fff"
               style={styles.reminderSwitch}
@@ -198,17 +217,14 @@ export default function StatsScreen() {
               style={styles.deleteBtn}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.deleteBtnText}>?</Text>
+              <Text style={styles.deleteBtnText}>{S.deleteChar}</Text>
             </TouchableOpacity>
           </View>
         ))}
 
         {reminders.length < MAX_REMINDERS && (
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => setPickerMode({ type: 'add' })}
-          >
-            <Text style={styles.addBtnText}>+ ???????? ???????????</Text>
+          <TouchableOpacity style={styles.addBtn} onPress={() => setPickerMode({ type: 'add' })}>
+            <Text style={styles.addBtnText}>{S.addReminder}</Text>
           </TouchableOpacity>
         )}
       </View>
