@@ -99,7 +99,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   setStepCount: (steps) => set({ stepCount: steps }),
 
   finishWalk: async () => {
-    const { selectedMode, routeCoordinates, distanceMeters, elapsedSeconds, startCoordinate } =
+    const { selectedMode, routeCoordinates, distanceMeters, elapsedSeconds, stepCount, startCoordinate } =
       get();
 
     const endCoord =
@@ -112,6 +112,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       mode: selectedMode,
       distanceMeters,
       durationSeconds: elapsedSeconds,
+      stepCount,
       routeCoordinates: JSON.stringify(routeCoordinates),
       startLat: startCoordinate?.latitude ?? null,
       startLng: startCoordinate?.longitude ?? null,

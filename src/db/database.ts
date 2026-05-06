@@ -6,6 +6,7 @@ export interface WalkSession {
   mode: string; // 'fast' | 'slow' | 'parkGame'
   distanceMeters: number;
   durationSeconds: number;
+  stepCount: number;
   routeCoordinates: string; // JSON string of Coordinate[]
   startLat: number | null;
   startLng: number | null;
@@ -25,6 +26,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       mode TEXT NOT NULL,
       distanceMeters REAL NOT NULL DEFAULT 0,
       durationSeconds INTEGER NOT NULL DEFAULT 0,
+      stepCount INTEGER NOT NULL DEFAULT 0,
       routeCoordinates TEXT NOT NULL DEFAULT '[]',
       startLat REAL,
       startLng REAL,
@@ -32,6 +34,12 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       endLng REAL
     );
   `);
+  // Migration: add stepCount column if it doesn't exist yet
+  try {
+    await db.execAsync(`ALTER TABLE walk_sessions ADD COLUMN stepCount INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
   return db;
 }
 
@@ -41,13 +49,14 @@ export async function insertSession(
   const database = await getDatabase();
   const result = await database.runAsync(
     `INSERT INTO walk_sessions
-      (date, mode, distanceMeters, durationSeconds, routeCoordinates, startLat, startLng, endLat, endLng)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (date, mode, distanceMeters, durationSeconds, stepCount, routeCoordinates, startLat, startLng, endLat, endLng)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       session.date,
       session.mode,
       session.distanceMeters,
       session.durationSeconds,
+      session.stepCount,
       session.routeCoordinates,
       session.startLat,
       session.startLng,

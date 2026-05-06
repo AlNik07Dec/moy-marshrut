@@ -55,7 +55,12 @@ function SessionRow({ session }: { session: WalkSession }) {
         <Text style={styles.sessionMode}>{MODE_LABEL[session.mode] ?? session.mode}</Text>
         <Text style={styles.sessionDuration}>{formatDuration(session.durationSeconds)}</Text>
       </View>
-      <Text style={styles.sessionDistance}>{km} км</Text>
+      <View style={styles.sessionStats}>
+        <Text style={styles.sessionDistance}>{km} км</Text>
+        {session.stepCount > 0 && (
+          <Text style={styles.sessionSteps}>{session.stepCount} шагов</Text>
+        )}
+      </View>
     </View>
   );
 }
@@ -227,7 +232,9 @@ const styles = StyleSheet.create({
   },
   sessionMode: { fontSize: 15, fontWeight: '600', color: '#1C1C1E' },
   sessionDuration: { fontSize: 13, color: '#8E8E93', marginTop: 2 },
+  sessionStats: { alignItems: 'flex-end' },
   sessionDistance: { fontSize: 17, fontWeight: '700', color: '#34C759' },
+  sessionSteps: { fontSize: 17, fontWeight: '700', color: '#007AFF', marginTop: 2 },
   emptyIcon: { fontSize: 56 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1C1C1E' },
   emptySub: { fontSize: 14, color: '#8E8E93', textAlign: 'center', paddingHorizontal: 32 },

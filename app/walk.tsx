@@ -33,7 +33,6 @@ export default function WalkScreen() {
     startCoordinate,
     elapsedSeconds,
     distanceMeters,
-    speedKmh,
     stepCount,
     selectedMode,
     finishWalk,
@@ -103,7 +102,7 @@ export default function WalkScreen() {
       <View style={styles.statsRow}>
         <StatCard value={String(stepCount)} unit="шаги" valueColor="#34C759" />
         <StatCard value={formatTime(elapsedSeconds)} unit="время" />
-        <StatCard value={speedKmh.toFixed(1)} unit="км/ч" valueColor="#007AFF" />
+        <StatCard value={(distanceMeters / 1000).toFixed(2)} unit="км" valueColor="#007AFF" />
       </View>
 
       {/* Map */}
