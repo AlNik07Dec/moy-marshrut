@@ -42,12 +42,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.startButtonWrapper}>
-        <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
-          <Text style={styles.startButtonText}>▶  Старт прогулки</Text>
-        </TouchableOpacity>
-      </View>
-
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -74,6 +68,12 @@ export default function HomeScreen() {
           />
         ))}
       </View>
+
+      <View style={styles.startButtonWrapper}>
+        <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
+          <Text style={styles.startButtonText}>▶  Старт прогулки</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -85,10 +85,9 @@ const styles = StyleSheet.create({
   },
   startButtonWrapper: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 16,
     backgroundColor: '#fff',
-    zIndex: 1,
   },
   startButton: {
     backgroundColor: '#34C759',

@@ -9,9 +9,9 @@ export interface Coordinate {
 export type WalkMode = 'fast' | 'slow' | 'parkGame';
 
 export const WALK_MODES: { id: WalkMode; label: string; icon: string }[] = [
-  { id: 'fast', label: 'Быстрая', icon: '🐕' },
-  { id: 'slow', label: 'Медленная', icon: '🚶' },
-  { id: 'parkGame', label: 'Игра в парке', icon: '🎮' },
+  { id: 'fast', label: 'Пробежка', icon: '🏃' },
+  { id: 'slow', label: 'Прогулка', icon: '🚶' },
+  { id: 'parkGame', label: 'Игра в парке', icon: '🎾' },
 ];
 
 interface WalkState {
@@ -24,12 +24,14 @@ interface WalkState {
   elapsedSeconds: number;
   distanceMeters: number;
   speedKmh: number;
+  stepCount: number;
 
   // Actions
   setMode: (mode: WalkMode) => void;
   startWalk: () => void;
   addCoordinate: (coord: Coordinate) => void;
   tickSecond: () => void;
+  setStepCount: (steps: number) => void;
   finishWalk: () => Promise<void>;
   reset: () => void;
 }
@@ -54,6 +56,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   elapsedSeconds: 0,
   distanceMeters: 0,
   speedKmh: 0,
+  stepCount: 0,
 
   setMode: (mode) => set({ selectedMode: mode }),
 
@@ -65,6 +68,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       elapsedSeconds: 0,
       distanceMeters: 0,
       speedKmh: 0,
+      stepCount: 0,
     }),
 
   addCoordinate: (coord) => {
@@ -91,6 +95,8 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   },
 
   tickSecond: () => set((state) => ({ elapsedSeconds: state.elapsedSeconds + 1 })),
+
+  setStepCount: (steps) => set({ stepCount: steps }),
 
   finishWalk: async () => {
     const { selectedMode, routeCoordinates, distanceMeters, elapsedSeconds, startCoordinate } =
@@ -123,5 +129,6 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       elapsedSeconds: 0,
       distanceMeters: 0,
       speedKmh: 0,
+      stepCount: 0,
     }),
 }));

@@ -17,7 +17,8 @@
       "bundleIdentifier": "com.myroute.moymarshrut",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки"
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки",
+        "NSMotionUsageDescription": "Нужно для подсчёта шагов во время прогулки"
       }
     },
     "android": {

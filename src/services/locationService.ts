@@ -1,8 +1,10 @@
 import * as Location from 'expo-location';
+import { Pedometer } from 'expo-sensors';
 import { useWalkStore } from '@/stores/walkStore';
 
 let subscription: Location.LocationSubscription | null = null;
 let timerInterval: ReturnType<typeof setInterval> | null = null;
+let pedometerSubscription: ReturnType<typeof Pedometer.watchStepCount> | null = null;
 
 export async function requestLocationPermission(): Promise<boolean> {
   const { status } = await Location.requestForegroundPermissionsAsync();
@@ -33,6 +35,13 @@ export async function startTracking(): Promise<boolean> {
     useWalkStore.getState().tickSecond();
   }, 1000);
 
+  const isAvailable = await Pedometer.isAvailableAsync();
+  if (isAvailable) {
+    pedometerSubscription = Pedometer.watchStepCount((result) => {
+      useWalkStore.getState().setStepCount(result.steps);
+    });
+  }
+
   return true;
 }
 
@@ -44,5 +53,9 @@ export function stopTracking(): void {
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
+  }
+  if (pedometerSubscription) {
+    pedometerSubscription.remove();
+    pedometerSubscription = null;
   }
 }
