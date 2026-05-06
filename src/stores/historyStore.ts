@@ -10,6 +10,15 @@ export interface DayGroup {
   totalDistanceMeters: number;
 }
 
+export interface WeekStats {
+  totalKm: number;
+  totalWalks: number;
+  totalSeconds: number;
+  byMode: { fast: number; slow: number; parkGame: number };
+  dailyKm: number[];   // 7 elements, index 0 = Monday of current week
+  dayLabels: string[]; // ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
+}
+
 interface HistoryState {
   sessions: WalkSession[];
   filter: HistoryFilter;
@@ -21,9 +30,20 @@ interface HistoryState {
   // Derived
   filteredSessions: () => WalkSession[];
   sessionsByDay: () => DayGroup[];
+  weekStats: () => WeekStats;
 }
 
 const DAY_MS = 86400 * 1000;
+
+/** Returns the Monday (00:00:00.000) of the week containing `date` (local time). */
+function getMondayOf(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diffToMon);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   sessions: [],
@@ -65,5 +85,43 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }
 
     return Array.from(map.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
+  },
+
+  weekStats: (): WeekStats => {
+    const { sessions } = get();
+    const monday = getMondayOf(new Date());
+    const weekStart = monday.getTime();
+    const weekEnd = weekStart + 7 * DAY_MS;
+
+    const thisWeek = sessions.filter((s) => s.date >= weekStart && s.date < weekEnd);
+
+    const byMode = { fast: 0, slow: 0, parkGame: 0 };
+    let totalKm = 0;
+    let totalWalks = 0;
+    let totalSeconds = 0;
+    const dailyKm = [0, 0, 0, 0, 0, 0, 0];
+
+    for (const s of thisWeek) {
+      totalKm += s.distanceMeters / 1000;
+      totalWalks += 1;
+      totalSeconds += s.durationSeconds;
+
+      const mode = s.mode as keyof typeof byMode;
+      if (mode in byMode) byMode[mode] += 1;
+
+      // Day index: 0 = Monday, 6 = Sunday
+      const sessionDay = new Date(s.date).getDay(); // 0=Sun
+      const idx = sessionDay === 0 ? 6 : sessionDay - 1;
+      dailyKm[idx] += s.distanceMeters / 1000;
+    }
+
+    return {
+      totalKm,
+      totalWalks,
+      totalSeconds,
+      byMode,
+      dailyKm,
+      dayLabels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+    };
   },
 }));
