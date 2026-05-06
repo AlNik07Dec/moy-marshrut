@@ -2,7 +2,8 @@ import * as SQLite from 'expo-sqlite';
 
 export interface WalkSession {
   id: number;
-  date: number; // Unix timestamp ms
+  date: number; // Unix timestamp ms — walk end time
+  startTime: number | null; // Unix timestamp ms — walk start time
   mode: string; // 'fast' | 'slow' | 'parkGame'
   distanceMeters: number;
   durationSeconds: number;
@@ -34,9 +35,13 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       endLng REAL
     );
   `);
-  // Migration: add stepCount column if it doesn't exist yet
   try {
     await db.execAsync(`ALTER TABLE walk_sessions ADD COLUMN stepCount INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
+  try {
+    await db.execAsync(`ALTER TABLE walk_sessions ADD COLUMN startTime INTEGER;`);
   } catch {
     // Column already exists — safe to ignore
   }
@@ -49,10 +54,11 @@ export async function insertSession(
   const database = await getDatabase();
   const result = await database.runAsync(
     `INSERT INTO walk_sessions
-      (date, mode, distanceMeters, durationSeconds, stepCount, routeCoordinates, startLat, startLng, endLat, endLng)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (date, startTime, mode, distanceMeters, durationSeconds, stepCount, routeCoordinates, startLat, startLng, endLat, endLng)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       session.date,
+      session.startTime ?? null,
       session.mode,
       session.distanceMeters,
       session.durationSeconds,
@@ -65,6 +71,15 @@ export async function insertSession(
     ]
   );
   return result.lastInsertRowId;
+}
+
+export async function fetchSessionById(id: number): Promise<WalkSession | null> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<WalkSession>(
+    'SELECT * FROM walk_sessions WHERE id = ?',
+    [id]
+  );
+  return row ?? null;
 }
 
 export async function fetchSessions(): Promise<WalkSession[]> {
