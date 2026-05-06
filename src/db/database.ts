@@ -17,7 +17,7 @@ let db: SQLite.SQLiteDatabase | null = null;
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (db) return db;
-  db = await SQLite.openDatabaseAsync('moymarshrut.db');
+  db = await SQLite.openDatabaseAsync('walkandpaw.db');
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS walk_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

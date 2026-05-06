@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Мой маршрут",
-    "slug": "moy-marshrut",
+    "name": "Walk&Paw",
+    "slug": "walk-and-paw",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.myroute.moymarshrut",
+      "bundleIdentifier": "com.walkandpaw.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Нужно для отслеживания маршрута прогулки",
@@ -30,7 +30,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.myroute.moymarshrut"
+      "package": "com.walkandpaw.app"
     },
     "web": {
       "bundler": "metro"
@@ -44,7 +44,7 @@
         }
       ]
     ],
-    "scheme": "moymarshrut",
+    "scheme": "walkandpaw",
     "experiments": {
       "typedRoutes": true
     }
