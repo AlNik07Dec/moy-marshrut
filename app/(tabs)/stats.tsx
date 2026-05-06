@@ -1,4 +1,3 @@
-// app/(tabs)/stats.tsx
 import React, { useCallback, useState } from 'react';
 import {
   View,
@@ -9,15 +8,18 @@ import {
   Pressable,
   Dimensions,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+// @ts-ignore
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useHistoryStore } from '@/stores/historyStore';
-import { useNotificationStore } from '@/stores/notificationStore';
+import { useNotificationStore, Reminder } from '@/stores/notificationStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 32;
+const MAX_REMINDERS = 5;
 
 const PIE_COLORS = {
   fast: '#e94560',
@@ -26,25 +28,29 @@ const PIE_COLORS = {
 };
 
 const MODE_LABELS = {
-  fast: 'РџСЂРѕР±РµР¶РєР°',
-  slow: 'РџСЂРѕРіСѓР»РєР°',
-  parkGame: 'РРіСЂР° РІ РїР°СЂРєРµ',
+  fast: 'Пробежка',
+  slow: 'Прогулка',
+  parkGame: 'Игра в парке',
 };
 
 function formatHours(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}С‡ ${m}РјРёРЅ` : `${m}РјРёРЅ`;
+  return h > 0 ? `${h}ч ${m}мин` : `${m}мин`;
 }
 
 function padTwo(n: number): string {
   return String(n).padStart(2, '0');
 }
 
+type PickerMode = { type: 'add' } | { type: 'edit'; id: string };
+
 export default function StatsScreen() {
   const { loadSessions, weekStats } = useHistoryStore();
-  const { enabled, hour, minute, setEnabled, setTime } = useNotificationStore();
-  const [showPicker, setShowPicker] = useState(false);
+  const { reminders, addReminder, removeReminder, toggleReminder, setReminderTime } =
+    useNotificationStore();
+
+  const [pickerMode, setPickerMode] = useState<PickerMode | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,7 +62,6 @@ export default function StatsScreen() {
   const hasData = stats.totalWalks > 0;
   const hasDistanceData = stats.dailyKm.some((v) => v > 0);
 
-  // Pie chart data вЂ” only include modes with count > 0
   const pieData = (
     Object.entries(stats.byMode) as [keyof typeof PIE_COLORS, number][]
   )
@@ -69,15 +74,32 @@ export default function StatsScreen() {
       legendFontSize: 13,
     }));
 
-  const onTimeChange = (_event: DateTimePickerEvent, selected?: Date) => {
-    setShowPicker(Platform.OS === 'ios');
-    if (selected) {
-      setTime(selected.getHours(), selected.getMinutes());
-    }
-  };
+  const currentReminder =
+    pickerMode?.type === 'edit'
+      ? reminders.find((r) => r.id === pickerMode.id)
+      : null;
 
   const pickerDate = new Date();
-  pickerDate.setHours(hour, minute, 0, 0);
+  if (currentReminder) {
+    pickerDate.setHours(currentReminder.hour, currentReminder.minute, 0, 0);
+  } else {
+    pickerDate.setHours(18, 0, 0, 0);
+  }
+
+  const onTimeChange = (_event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS !== 'ios') setPickerMode(null);
+    if (!selected) return;
+    const h = selected.getHours();
+    const m = selected.getMinutes();
+
+    if (pickerMode?.type === 'add') {
+      addReminder(h, m);
+      setPickerMode(null);
+    } else if (pickerMode?.type === 'edit' && pickerMode.id) {
+      setReminderTime(pickerMode.id, h, m);
+      if (Platform.OS === 'ios') setPickerMode(null);
+    }
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -85,23 +107,22 @@ export default function StatsScreen() {
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{stats.totalKm.toFixed(1)}</Text>
-          <Text style={styles.summaryLabel}>РєРј</Text>
+          <Text style={styles.summaryLabel}>км</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{stats.totalWalks}</Text>
-          <Text style={styles.summaryLabel}>РїСЂРѕРіСѓР»РѕРє</Text>
+          <Text style={styles.summaryLabel}>прогулок</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{formatHours(stats.totalSeconds)}</Text>
-          <Text style={styles.summaryLabel}>РІСЂРµРјСЏ</Text>
+          <Text style={styles.summaryLabel}>время</Text>
         </View>
       </View>
 
-      {/* Pie chart вЂ” by mode */}
+      {/* Pie chart */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>РџРѕ СЂРµР¶РёРјР°Рј</Text>
+        <Text style={styles.sectionTitle}>По режимам</Text>
         {hasData ? (
-          // @ts-ignore
           <PieChart
             data={pieData}
             width={CHART_WIDTH}
@@ -117,16 +138,15 @@ export default function StatsScreen() {
           />
         ) : (
           <View style={styles.emptyChart}>
-            <Text style={styles.emptyText}>РќРµС‚ РїСЂРѕРіСѓР»РѕРє Р·Р° СЌС‚Сѓ РЅРµРґРµР»СЋ</Text>
+            <Text style={styles.emptyText}>Нет прогулок за эту неделю</Text>
           </View>
         )}
       </View>
 
-      {/* Line chart вЂ” distance per day */}
+      {/* Line chart */}
       {hasDistanceData && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Р”РёСЃС‚Р°РЅС†РёСЏ Р·Р° РЅРµРґРµР»СЋ</Text>
-          {/* @ts-ignore */}
+          <Text style={styles.sectionTitle}>Дистанция за неделю</Text>
           <LineChart
             data={{
               labels: stats.dayLabels,
@@ -134,7 +154,7 @@ export default function StatsScreen() {
             }}
             width={CHART_WIDTH}
             height={160}
-            yAxisSuffix=" РєРј"
+            yAxisSuffix=" км"
             chartConfig={{
               backgroundColor: '#fff',
               backgroundGradientFrom: '#fff',
@@ -152,35 +172,48 @@ export default function StatsScreen() {
         </View>
       )}
 
-      {/* Notification settings */}
+      {/* Reminders */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>РќР°РїРѕРјРёРЅР°РЅРёСЏ</Text>
-        <View style={styles.notifCard}>
-          <View style={styles.notifRow}>
-            <View style={styles.notifInfo}>
-              <Text style={styles.notifLabel}>РќР°РїРѕРјРёРЅР°С‚СЊ Рѕ РїСЂРѕРіСѓР»РєРµ</Text>
-              <Pressable onPress={() => enabled && setShowPicker(true)}>
-                <Text style={[styles.notifTime, !enabled && styles.notifTimeDisabled]}>
-                  {padTwo(hour)}:{padTwo(minute)}
-                </Text>
-              </Pressable>
-            </View>
+        <Text style={styles.sectionTitle}>Напоминания</Text>
+
+        {reminders.map((reminder: Reminder) => (
+          <View key={reminder.id} style={styles.reminderRow}>
+            <Pressable
+              style={styles.reminderTimeBlock}
+              onPress={() => setPickerMode({ type: 'edit', id: reminder.id })}
+            >
+              <Text style={[styles.reminderTime, !reminder.enabled && styles.reminderTimeDisabled]}>
+                {padTwo(reminder.hour)}:{padTwo(reminder.minute)}
+              </Text>
+            </Pressable>
             <Switch
-              value={enabled}
-              onValueChange={(v) => { setEnabled(v); }}
+              value={reminder.enabled}
+              onValueChange={(v) => { toggleReminder(reminder.id, v); }}
               trackColor={{ false: '#E5E5EA', true: '#34C759' }}
               thumbColor="#fff"
+              style={styles.reminderSwitch}
             />
+            <TouchableOpacity
+              onPress={() => removeReminder(reminder.id)}
+              style={styles.deleteBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.deleteBtnText}>?</Text>
+            </TouchableOpacity>
           </View>
-          {enabled && (
-            <Text style={styles.notifHint}>
-              РљР°Р¶РґС‹Р№ РґРµРЅСЊ РІ {padTwo(hour)}:{padTwo(minute)} вЂ” РЅР°Р¶РјРё РЅР° РІСЂРµРјСЏ, С‡С‚РѕР±С‹ РёР·РјРµРЅРёС‚СЊ
-            </Text>
-          )}
-        </View>
+        ))}
+
+        {reminders.length < MAX_REMINDERS && (
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => setPickerMode({ type: 'add' })}
+          >
+            <Text style={styles.addBtnText}>+ Добавить напоминание</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {showPicker && (
+      {pickerMode !== null && (
         <DateTimePicker
           value={pickerDate}
           mode="time"
@@ -238,20 +271,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: { fontSize: 14, color: '#8E8E93' },
-  notifCard: { gap: 8 },
-  notifRow: {
+  reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
   },
-  notifInfo: { flex: 1 },
-  notifLabel: { fontSize: 15, color: '#1C1C1E' },
-  notifTime: {
-    fontSize: 28,
+  reminderTimeBlock: { flex: 1 },
+  reminderTime: {
+    fontSize: 26,
     fontWeight: '700',
     color: '#007AFF',
-    marginTop: 2,
   },
-  notifTimeDisabled: { color: '#C7C7CC' },
-  notifHint: { fontSize: 12, color: '#8E8E93' },
+  reminderTimeDisabled: { color: '#C7C7CC' },
+  reminderSwitch: { marginRight: 12 },
+  deleteBtn: {
+    padding: 4,
+  },
+  deleteBtnText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    fontWeight: '600',
+  },
+  addBtn: {
+    marginTop: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderRadius: 10,
+    borderStyle: 'dashed',
+  },
+  addBtnText: {
+    fontSize: 15,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
 });
