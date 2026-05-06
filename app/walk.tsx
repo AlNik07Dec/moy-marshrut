@@ -13,16 +13,7 @@ import { useWalkStore } from '@/stores/walkStore';
 import { startTracking, stopTracking } from '@/services/locationService';
 import { StatCard } from '@/components/StatCard';
 import { HomeMarker } from '@/components/HomeMarker';
-
-function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) {
-    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
+import { formatTime } from '@/utils/formatTime';
 
 const FINISH_LABEL: Record<string, string> = {
   fast: '⏹  Завершить пробежку',
