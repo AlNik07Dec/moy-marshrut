@@ -28,15 +28,15 @@ const PIE_COLORS = {
 };
 
 const MODE_LABELS = {
-  fast: 'Пробежка',
-  slow: 'Прогулка',
-  parkGame: 'Игра в парке',
+  fast: '????????',
+  slow: '????????',
+  parkGame: '???? ? ?????',
 };
 
 function formatHours(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}ч ${m}мин` : `${m}мин`;
+  return h > 0 ? `${h}? ${m}???` : `${m}???`;
 }
 
 function padTwo(n: number): string {
@@ -107,21 +107,21 @@ export default function StatsScreen() {
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{stats.totalKm.toFixed(1)}</Text>
-          <Text style={styles.summaryLabel}>км</Text>
+          <Text style={styles.summaryLabel}>??</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{stats.totalWalks}</Text>
-          <Text style={styles.summaryLabel}>прогулок</Text>
+          <Text style={styles.summaryLabel}>????????</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{formatHours(stats.totalSeconds)}</Text>
-          <Text style={styles.summaryLabel}>время</Text>
+          <Text style={styles.summaryLabel}>?????</Text>
         </View>
       </View>
 
       {/* Pie chart */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>По режимам</Text>
+        <Text style={styles.sectionTitle}>?? ???????</Text>
         {hasData ? (
           <PieChart
             data={pieData}
@@ -138,7 +138,7 @@ export default function StatsScreen() {
           />
         ) : (
           <View style={styles.emptyChart}>
-            <Text style={styles.emptyText}>Нет прогулок за эту неделю</Text>
+            <Text style={styles.emptyText}>??? ???????? ?? ??? ??????</Text>
           </View>
         )}
       </View>
@@ -146,7 +146,7 @@ export default function StatsScreen() {
       {/* Line chart */}
       {hasDistanceData && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Дистанция за неделю</Text>
+          <Text style={styles.sectionTitle}>????????? ?? ??????</Text>
           <LineChart
             data={{
               labels: stats.dayLabels,
@@ -154,7 +154,7 @@ export default function StatsScreen() {
             }}
             width={CHART_WIDTH}
             height={160}
-            yAxisSuffix=" км"
+            yAxisSuffix=" ??"
             chartConfig={{
               backgroundColor: '#fff',
               backgroundGradientFrom: '#fff',
@@ -174,7 +174,7 @@ export default function StatsScreen() {
 
       {/* Reminders */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Напоминания</Text>
+        <Text style={styles.sectionTitle}>???????????</Text>
 
         {reminders.map((reminder: Reminder) => (
           <View key={reminder.id} style={styles.reminderRow}>
@@ -208,7 +208,7 @@ export default function StatsScreen() {
             style={styles.addBtn}
             onPress={() => setPickerMode({ type: 'add' })}
           >
-            <Text style={styles.addBtnText}>+ Добавить напоминание</Text>
+            <Text style={styles.addBtnText}>+ ???????? ???????????</Text>
           </TouchableOpacity>
         )}
       </View>
