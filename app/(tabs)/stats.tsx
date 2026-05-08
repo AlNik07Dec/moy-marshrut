@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Swipeable, RectButton } from 'react-native-gesture-handler';
 import { useFocusEffect } from 'expo-router';
 // @ts-ignore
 import { PieChart, LineChart } from 'react-native-chart-kit';
@@ -21,6 +23,9 @@ import { useNotificationStore, Reminder } from '@/stores/notificationStore';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 32;
 const MAX_REMINDERS = 5;
+const SWIPE_ACTION_WIDTH = 72;
+const SWIPE_DELETE_COLOR = '#FF3B30';
+const SWIPE_EDIT_COLOR = '#FF9500';
 
 /** Russian strings via Unicode escapes (ASCII source file). */
 const S = {
@@ -38,7 +43,6 @@ const S = {
   reminders: '\u041d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u044f',
   addReminder:
     '\u002b \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u0435',
-  deleteChar: '\u2715',
   scheduleErrorTitle: '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435',
   scheduleErrorBody:
     '\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437 \u0438\u043b\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u0438\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.',
@@ -71,12 +75,21 @@ function padTwo(n: number): string {
 
 type PickerMode = { type: 'add' } | { type: 'edit'; id: string };
 
+type SwipeableInstance = React.ElementRef<typeof Swipeable>;
+
 export default function StatsScreen() {
   const { loadSessions, weekStats } = useHistoryStore();
   const { reminders, addReminder, removeReminder, toggleReminder, setReminderTime } =
     useNotificationStore();
 
   const [pickerMode, setPickerMode] = useState<PickerMode | null>(null);
+  const swipeRefs = useRef<Map<string, SwipeableInstance | null>>(new Map());
+
+  const closeOtherSwipes = useCallback((exceptId: string) => {
+    swipeRefs.current.forEach((row, id) => {
+      if (id !== exceptId) row?.close();
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -204,32 +217,68 @@ export default function StatsScreen() {
         <Text style={styles.sectionTitle}>{S.reminders}</Text>
 
         {reminders.map((reminder: Reminder) => (
-          <View key={reminder.id} style={styles.reminderRow}>
-            <Pressable
-              style={styles.reminderTimeBlock}
-              onPress={() => setPickerMode({ type: 'edit', id: reminder.id })}
-            >
-              <Text style={[styles.reminderTime, !reminder.enabled && styles.reminderTimeDisabled]}>
-                {padTwo(reminder.hour)}:{padTwo(reminder.minute)}
-              </Text>
-            </Pressable>
-            <Switch
-              value={reminder.enabled}
-              onValueChange={(v) => {
-                toggleReminder(reminder.id, v);
-              }}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor="#fff"
-              style={styles.reminderSwitch}
-            />
-            <TouchableOpacity
-              onPress={() => removeReminder(reminder.id)}
-              style={styles.deleteBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={styles.deleteBtnText}>{S.deleteChar}</Text>
-            </TouchableOpacity>
-          </View>
+          <Swipeable
+            key={reminder.id}
+            ref={(inst) => {
+              if (inst) swipeRefs.current.set(reminder.id, inst);
+              else swipeRefs.current.delete(reminder.id);
+            }}
+            friction={2}
+            leftThreshold={36}
+            rightThreshold={36}
+            activeOffsetX={[-12, 12]}
+            overshootLeft={false}
+            overshootRight={false}
+            onSwipeableWillOpen={() => closeOtherSwipes(reminder.id)}
+            containerStyle={styles.swipeRowContainer}
+            childrenContainerStyle={styles.reminderRowChildren}
+            renderLeftActions={() => (
+              <View style={styles.swipeActionColumn}>
+                <RectButton
+                  style={[styles.swipeActionInner, { backgroundColor: SWIPE_EDIT_COLOR }]}
+                  onPress={() => {
+                    swipeRefs.current.get(reminder.id)?.close();
+                    setPickerMode({ type: 'edit', id: reminder.id });
+                  }}
+                >
+                  <Ionicons name="pencil" size={22} color="#fff" />
+                </RectButton>
+              </View>
+            )}
+            renderRightActions={() => (
+              <View style={styles.swipeActionColumn}>
+                <RectButton
+                  style={[styles.swipeActionInner, { backgroundColor: SWIPE_DELETE_COLOR }]}
+                  onPress={() => {
+                    swipeRefs.current.get(reminder.id)?.close();
+                    removeReminder(reminder.id);
+                  }}
+                >
+                  <Ionicons name="trash" size={22} color="#fff" />
+                </RectButton>
+              </View>
+            )}
+          >
+            <View style={styles.reminderRow}>
+              <Pressable
+                style={styles.reminderTimeBlock}
+                onPress={() => setPickerMode({ type: 'edit', id: reminder.id })}
+              >
+                <Text style={[styles.reminderTime, !reminder.enabled && styles.reminderTimeDisabled]}>
+                  {padTwo(reminder.hour)}:{padTwo(reminder.minute)}
+                </Text>
+              </Pressable>
+              <Switch
+                value={reminder.enabled}
+                onValueChange={(v) => {
+                  toggleReminder(reminder.id, v);
+                }}
+                trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+                thumbColor="#fff"
+                style={styles.reminderSwitch}
+              />
+            </View>
+          </Swipeable>
         ))}
 
         {reminders.length < MAX_REMINDERS && (
@@ -300,12 +349,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: { fontSize: 14, color: '#8E8E93' },
+  swipeRowContainer: {
+    overflow: 'hidden',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
+  },
+  reminderRowChildren: {
+    backgroundColor: '#fff',
+  },
   reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5EA',
+    backgroundColor: '#fff',
+  },
+  swipeActionColumn: {
+    flex: 1,
+    width: SWIPE_ACTION_WIDTH,
+  },
+  swipeActionInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   reminderTimeBlock: { flex: 1 },
   reminderTime: {
@@ -314,15 +379,7 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
   reminderTimeDisabled: { color: '#C7C7CC' },
-  reminderSwitch: { marginRight: 12 },
-  deleteBtn: {
-    padding: 4,
-  },
-  deleteBtnText: {
-    fontSize: 16,
-    color: '#FF3B30',
-    fontWeight: '600',
-  },
+  reminderSwitch: { marginRight: 4 },
   addBtn: {
     marginTop: 12,
     paddingVertical: 10,
