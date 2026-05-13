@@ -36,7 +36,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   overlay: {
-    flex: 1,
     backgroundColor: theme.colors.glassDark,
     borderWidth: 1,
     borderColor: theme.colors.glassBorder,
