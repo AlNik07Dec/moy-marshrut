@@ -3,6 +3,7 @@ import { BlurView } from 'expo-blur';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { theme } from '../theme';
 
 const TAB_META: Record<string, { active: string; inactive: string; label: string }> = {
@@ -11,7 +12,7 @@ const TAB_META: Record<string, { active: string; inactive: string; label: string
   stats:   { active: 'bar-chart', inactive: 'bar-chart-outline', label: 'Статистика' },
 };
 
-export function GlassTabBar({ state, navigation }: any) {
+export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
