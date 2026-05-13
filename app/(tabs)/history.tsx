@@ -10,6 +10,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+
 import { BarChart } from 'react-native-chart-kit';
 import { useHistoryStore, HistoryFilter, DayGroup } from '@/stores/historyStore';
 import { WalkSession } from '@/db/database';
@@ -76,6 +77,10 @@ export default function HistoryScreen() {
   const { filter, setFilter, loadSessions, filteredSessions, sessionsByDay, isLoading } =
     useHistoryStore();
 
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle('light-content');
+  }, []));
+
   useFocusEffect(
     useCallback(() => {
       loadSessions();
@@ -120,7 +125,6 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
       {/* Filter toggle */}
       <View style={styles.filterRow}>
         <FilterButton label="Неделя" active={filter === 'week'} onPress={() => setFilter('week')} />

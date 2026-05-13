@@ -1,8 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Alert, StatusBar } from 'react-native';
 import MapView, { PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWalkStore, WALK_MODES } from '@/stores/walkStore';
@@ -21,6 +21,10 @@ export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
   const { selectedMode, setMode } = useWalkStore();
   const insets = useSafeAreaInsets();
+
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle('dark-content');
+  }, []));
 
   useEffect(() => {
     (async () => {
@@ -49,7 +53,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}

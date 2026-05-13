@@ -84,6 +84,10 @@ export default function StatsScreen() {
     });
   }, []);
 
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle('light-content');
+  }, []));
+
   useFocusEffect(
     useCallback(() => {
       loadSessions();
@@ -137,7 +141,6 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <StatusBar barStyle="light-content" />
       {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
