@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { Coordinate } from '@/stores/walkStore';
+import { theme } from '../theme';
 
 interface Props {
   coordinate: Coordinate;
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
