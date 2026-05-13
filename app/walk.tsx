@@ -31,6 +31,7 @@ export default function WalkScreen() {
     elapsedSeconds,
     distanceMeters,
     stepCount,
+    calories,
     selectedMode,
     finishWalk,
   } = useWalkStore();
@@ -95,11 +96,16 @@ export default function WalkScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Stats row */}
-      <View style={styles.statsRow}>
-        <StatCard value={String(stepCount)} unit="шаги" valueColor="#34C759" />
-        <StatCard value={formatTime(elapsedSeconds)} unit="время" />
-        <StatCard value={(distanceMeters / 1000).toFixed(2)} unit="км" valueColor="#007AFF" />
+      {/* Stats grid 2×2 */}
+      <View style={styles.statsGrid}>
+        <View style={styles.statsRow}>
+          <StatCard value={String(stepCount)} unit="шаги" valueColor="#34C759" />
+          <StatCard value={formatTime(elapsedSeconds)} unit="время" />
+        </View>
+        <View style={styles.statsRow}>
+          <StatCard value={(distanceMeters / 1000).toFixed(2)} unit="км" valueColor="#007AFF" />
+          <StatCard value={String(Math.round(calories))} unit="ккал" valueColor="#FF9500" />
+        </View>
       </View>
 
       {/* Map */}
@@ -145,13 +151,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
+  statsGrid: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
+    gap: 8,
     backgroundColor: '#fff',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
   },
   map: {
     flex: 1,
