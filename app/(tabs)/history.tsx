@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { BarChart } from 'react-native-chart-kit';
 import { useHistoryStore, HistoryFilter, DayGroup } from '@/stores/historyStore';
 import { WalkSession } from '@/db/database';
 import { WALK_MODES } from '@/stores/walkStore';
+import { theme } from '@/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 32;
@@ -83,7 +84,6 @@ export default function HistoryScreen() {
   const groups = sessionsByDay();
   const allFiltered = filteredSessions();
 
-  // Build chart data from last 7 or 30 days
   const chartData = (() => {
     const days = filter === 'week' ? 7 : 30;
     const labels: string[] = [];
@@ -99,18 +99,20 @@ export default function HistoryScreen() {
       values.push(group ? group.totalDistanceMeters / 1000 : 0);
     }
 
-    return { labels: filter === 'week' ? labels : labels.filter((_, i) => i % 5 === 0 || i === labels.length - 1).map((l) => l), values, allLabels: labels };
+    return { values, allLabels: labels };
   })();
 
   const displayLabels =
     filter === 'week'
       ? chartData.allLabels
-      : chartData.allLabels.map((l, i) => (i % 5 === 0 || i === chartData.allLabels.length - 1 ? l : ''));
+      : chartData.allLabels.map((l, i) =>
+          i % 5 === 0 || i === chartData.allLabels.length - 1 ? l : ''
+        );
 
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={theme.colors.accent} />
       </View>
     );
   }
@@ -119,16 +121,8 @@ export default function HistoryScreen() {
     <View style={styles.container}>
       {/* Filter toggle */}
       <View style={styles.filterRow}>
-        <FilterButton
-          label="Неделя"
-          active={filter === 'week'}
-          onPress={() => setFilter('week')}
-        />
-        <FilterButton
-          label="Месяц"
-          active={filter === 'month'}
-          onPress={() => setFilter('month')}
-        />
+        <FilterButton label="Неделя" active={filter === 'week'} onPress={() => setFilter('week')} />
+        <FilterButton label="Месяц" active={filter === 'month'} onPress={() => setFilter('month')} />
       </View>
 
       {allFiltered.length === 0 ? (
@@ -153,16 +147,19 @@ export default function HistoryScreen() {
                 yAxisLabel=""
                 yAxisSuffix=" км"
                 chartConfig={{
-                  backgroundColor: '#fff',
-                  backgroundGradientFrom: '#fff',
-                  backgroundGradientTo: '#fff',
+                  backgroundColor: theme.colors.bgDeep,
+                  backgroundGradientFrom: theme.colors.bg,
+                  backgroundGradientTo: theme.colors.bgDeep,
                   decimalPlaces: 1,
-                  color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-                  labelColor: () => '#8E8E93',
+                  color: (opacity = 1) => `rgba(79,142,247,${opacity})`,
+                  labelColor: () => theme.colors.textSecondary,
                   barPercentage: 0.7,
-                  propsForBackgroundLines: { strokeWidth: 0.5, stroke: '#E5E5EA' },
+                  propsForBackgroundLines: {
+                    strokeWidth: 0.5,
+                    stroke: theme.colors.glassBorder,
+                  },
                 }}
-                style={{ borderRadius: 12 }}
+                style={{ borderRadius: theme.radius.md }}
                 showValuesOnTopOfBars={false}
                 withInnerLines
                 fromZero
@@ -177,7 +174,7 @@ export default function HistoryScreen() {
               ))}
             </View>
           )}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: theme.tabBarHeight + 16 }}
         />
       )}
     </View>
@@ -185,46 +182,58 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7' },
+  container: { flex: 1, backgroundColor: theme.colors.bg },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
   filterRow: {
     flexDirection: 'row',
     margin: 16,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 10,
-    padding: 2,
-    gap: 2,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
+    padding: 3,
+    gap: 3,
   },
   filterBtn: {
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: theme.radius.sm - 2,
   },
-  filterBtnActive: { backgroundColor: '#fff' },
-  filterBtnText: { fontSize: 14, color: '#8E8E93', fontWeight: '500' },
-  filterBtnTextActive: { color: '#1C1C1E', fontWeight: '600' },
+  filterBtnActive: {
+    backgroundColor: 'rgba(79,142,247,0.20)',
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
+  },
+  filterBtnText: { fontSize: 14, color: theme.colors.textMuted, fontWeight: '500' },
+  filterBtnTextActive: { color: theme.colors.accent, fontWeight: '600' },
   chartWrapper: {
     marginHorizontal: 16,
     marginBottom: 8,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
     padding: 8,
+    overflow: 'hidden',
   },
   dayGroup: {
     marginHorizontal: 16,
     marginBottom: 10,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
     overflow: 'hidden',
   },
   dayHeader: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: theme.colors.textSecondary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sessionRow: {
     flexDirection: 'row',
@@ -232,17 +241,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: theme.colors.glassBorder,
   },
-  sessionRowPressed: { backgroundColor: '#F2F2F7' },
+  sessionRowPressed: { backgroundColor: theme.colors.glass },
   sessionLeft: { flex: 1 },
-  sessionMode: { fontSize: 15, fontWeight: '600', color: '#1C1C1E' },
-  sessionDuration: { fontSize: 13, color: '#8E8E93', marginTop: 2 },
+  sessionMode: { fontSize: 15, fontWeight: '600', color: theme.colors.textPrimary },
+  sessionDuration: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
   sessionStats: { alignItems: 'flex-end', marginRight: 8 },
-  sessionDistance: { fontSize: 17, fontWeight: '700', color: '#34C759' },
-  sessionSteps: { fontSize: 17, fontWeight: '700', color: '#007AFF', marginTop: 2 },
-  chevron: { fontSize: 20, color: '#C7C7CC', fontWeight: '300' },
+  sessionDistance: { fontSize: 17, fontWeight: '700', color: theme.colors.green },
+  sessionSteps: { fontSize: 17, fontWeight: '700', color: theme.colors.accent, marginTop: 2 },
+  chevron: { fontSize: 20, color: theme.colors.textMuted, fontWeight: '300' },
   emptyIcon: { fontSize: 56 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1C1C1E' },
-  emptySub: { fontSize: 14, color: '#8E8E93', textAlign: 'center', paddingHorizontal: 32 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.textPrimary },
+  emptySub: { fontSize: 14, color: theme.colors.textSecondary, textAlign: 'center', paddingHorizontal: 32 },
 });
