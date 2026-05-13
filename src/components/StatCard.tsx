@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { theme } from '../theme';
 
 interface Props {
   value: string;
@@ -7,7 +8,7 @@ interface Props {
   valueColor?: string;
 }
 
-export function StatCard({ value, unit, valueColor = '#1C1C1E' }: Props) {
+export function StatCard({ value, unit, valueColor = theme.colors.textPrimary }: Props) {
   return (
     <View style={styles.card}>
       <Text style={[styles.value, { color: valueColor }]} numberOfLines={1}>
@@ -23,8 +24,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
+    backgroundColor: theme.colors.glass,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
   },
   value: {
     fontSize: 20,
@@ -33,7 +36,7 @@ const styles = StyleSheet.create({
   } as any,
   unit: {
     fontSize: 11,
-    color: '#8E8E93',
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
 });

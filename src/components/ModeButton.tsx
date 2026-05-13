@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, View } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 import { WalkMode } from '@/stores/walkStore';
+import { theme } from '../theme';
 
 interface Props {
   id: WalkMode;
@@ -31,14 +32,19 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#F2F2F7',
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.glass,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   selected: {
-    backgroundColor: '#E8F0FE',
-    borderColor: '#007AFF',
+    backgroundColor: 'rgba(79,142,247,0.20)',
+    borderColor: theme.colors.glassBorder,
+    shadowColor: theme.colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
   icon: {
     fontSize: 22,
@@ -47,11 +53,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#3C3C43',
+    color: theme.colors.textSecondary,
     adjustsFontSizeToFit: true,
   } as any,
   labelSelected: {
     fontWeight: '700',
-    color: '#007AFF',
+    color: theme.colors.accent,
   },
 });
