@@ -5,15 +5,18 @@ import {
   Text,
   StyleSheet,
   Alert,
-  SafeAreaView,
 } from 'react-native';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWalkStore } from '@/stores/walkStore';
 import { startTracking, stopTracking } from '@/services/locationService';
 import { StatCard } from '@/components/StatCard';
+import { GlassCard } from '@/components/GlassCard';
 import { HomeMarker } from '@/components/HomeMarker';
 import { formatTime } from '@/utils/formatTime';
+import { theme } from '@/theme';
 
 const FINISH_LABEL: Record<string, string> = {
   fast: '⏹  Завершить пробежку',
@@ -24,6 +27,7 @@ const FINISH_LABEL: Record<string, string> = {
 export default function WalkScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
 
   const {
     routeCoordinates,
@@ -36,7 +40,6 @@ export default function WalkScreen() {
     finishWalk,
   } = useWalkStore();
 
-  // Follow user on map as coordinates come in
   const lastCoordRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
@@ -60,7 +63,6 @@ export default function WalkScreen() {
 
   useEffect(() => {
     let didStart = false;
-
     const init = async () => {
       const ok = await startTracking();
       didStart = ok;
@@ -69,23 +71,14 @@ export default function WalkScreen() {
           'Нет доступа к геолокации',
           'Разрешите доступ в Настройках → Конфиденциальность → Геолокация',
           [
-            {
-              text: 'Открыть настройки',
-              onPress: () => {
-                // Linking to settings handled by expo-location
-              },
-            },
+            { text: 'Открыть настройки', onPress: () => {} },
             { text: 'Назад', style: 'cancel', onPress: () => router.back() },
           ]
         );
       }
     };
-
     init();
-
-    return () => {
-      if (didStart) stopTracking();
-    };
+    return () => { if (didStart) stopTracking(); };
   }, []);
 
   const handleFinish = useCallback(async () => {
@@ -95,18 +88,18 @@ export default function WalkScreen() {
   }, [finishWalk, router]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Stats grid 2×2 */}
-      <View style={styles.statsGrid}>
+      <GlassCard style={styles.statsCard} padding={12}>
         <View style={styles.statsRow}>
-          <StatCard value={String(stepCount)} unit="шаги" valueColor="#34C759" />
+          <StatCard value={String(stepCount)} unit="шаги" valueColor={theme.colors.green} />
           <StatCard value={formatTime(elapsedSeconds)} unit="время" />
         </View>
-        <View style={styles.statsRow}>
-          <StatCard value={(distanceMeters / 1000).toFixed(2)} unit="км" valueColor="#007AFF" />
-          <StatCard value={String(Math.round(calories))} unit="ккал" valueColor="#FF9500" />
+        <View style={[styles.statsRow, { marginTop: 8 }]}>
+          <StatCard value={(distanceMeters / 1000).toFixed(2)} unit="км" valueColor={theme.colors.accent} />
+          <StatCard value={String(Math.round(calories))} unit="ккал" valueColor={theme.colors.orange} />
         </View>
-      </View>
+      </GlassCard>
 
       {/* Map */}
       <MapView
@@ -121,42 +114,44 @@ export default function WalkScreen() {
           longitudeDelta: 0.005,
         }}
       >
-        {/* Blue route polyline */}
         {routeCoordinates.length > 1 && (
           <Polyline
             coordinates={routeCoordinates}
-            strokeColor="#007AFF"
+            strokeColor={theme.colors.accent}
             strokeWidth={4}
             lineJoin="round"
             lineCap="round"
           />
         )}
-
-        {/* Home marker at start point */}
         {startCoordinate && <HomeMarker coordinate={startCoordinate} />}
       </MapView>
 
       {/* Finish button */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.finishButton} onPress={handleFinish} activeOpacity={0.85}>
-          <Text style={styles.finishButtonText}>{FINISH_LABEL[selectedMode]}</Text>
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+        <TouchableOpacity onPress={handleFinish} activeOpacity={0.85} style={styles.finishButtonOuter}>
+          <LinearGradient
+            colors={['#ff5c52', theme.colors.red]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.finishButton}
+          >
+            <Text style={styles.finishButtonText}>{FINISH_LABEL[selectedMode]}</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.bg,
   },
-  statsGrid: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    gap: 8,
-    backgroundColor: '#fff',
+  statsCard: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
   },
   statsRow: {
     flexDirection: 'row',
@@ -168,14 +163,21 @@ const styles = StyleSheet.create({
   bottomBar: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.bg,
+  },
+  finishButtonOuter: {
+    borderRadius: theme.radius.md,
+    overflow: 'hidden',
+    shadowColor: theme.colors.red,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 6,
   },
   finishButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
+    borderRadius: theme.radius.md,
   },
   finishButtonText: {
     color: '#fff',
