@@ -8,6 +8,7 @@ export interface WalkSession {
   distanceMeters: number;
   durationSeconds: number;
   stepCount: number;
+  calories: number;
   routeCoordinates: string; // JSON string of Coordinate[]
   startLat: number | null;
   startLng: number | null;
@@ -28,6 +29,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       distanceMeters REAL NOT NULL DEFAULT 0,
       durationSeconds INTEGER NOT NULL DEFAULT 0,
       stepCount INTEGER NOT NULL DEFAULT 0,
+      calories REAL NOT NULL DEFAULT 0,
       routeCoordinates TEXT NOT NULL DEFAULT '[]',
       startLat REAL,
       startLng REAL,
@@ -45,6 +47,11 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   } catch {
     // Column already exists — safe to ignore
   }
+  try {
+    await db.execAsync(`ALTER TABLE walk_sessions ADD COLUMN calories REAL NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
   return db;
 }
 
@@ -54,8 +61,8 @@ export async function insertSession(
   const database = await getDatabase();
   const result = await database.runAsync(
     `INSERT INTO walk_sessions
-      (date, startTime, mode, distanceMeters, durationSeconds, stepCount, routeCoordinates, startLat, startLng, endLat, endLng)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (date, startTime, mode, distanceMeters, durationSeconds, stepCount, calories, routeCoordinates, startLat, startLng, endLat, endLng)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       session.date,
       session.startTime ?? null,
@@ -63,6 +70,7 @@ export async function insertSession(
       session.distanceMeters,
       session.durationSeconds,
       session.stepCount,
+      session.calories,
       session.routeCoordinates,
       session.startLat,
       session.startLng,
