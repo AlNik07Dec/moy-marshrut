@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   Alert,
+  StatusBar,
 } from 'react-native';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
@@ -89,6 +90,7 @@ export default function WalkScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" />
       {/* Stats grid 2×2 */}
       <GlassCard style={styles.statsCard} padding={12}>
         <View style={styles.statsRow}>
