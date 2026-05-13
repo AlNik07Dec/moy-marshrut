@@ -49,7 +49,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   headerCard: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
   },
   headerContent: {
     flexDirection: 'row',
