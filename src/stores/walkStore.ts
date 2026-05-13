@@ -14,6 +14,8 @@ export const WALK_MODES: { id: WalkMode; label: string; icon: string }[] = [
   { id: 'parkGame', label: 'Игра в парке', icon: '🎾' },
 ];
 
+const KCAL_PER_KM: Record<WalkMode, number> = { fast: 80, slow: 60, parkGame: 70 };
+
 interface WalkState {
   selectedMode: WalkMode;
   isWalkActive: boolean;
@@ -25,6 +27,7 @@ interface WalkState {
   distanceMeters: number;
   speedKmh: number;
   stepCount: number;
+  calories: number;
   startTime: number | null;
 
   // Actions
@@ -58,6 +61,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   distanceMeters: 0,
   speedKmh: 0,
   stepCount: 0,
+  calories: 0,
   startTime: null,
 
   setMode: (mode) => set({ selectedMode: mode }),
@@ -71,11 +75,12 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       distanceMeters: 0,
       speedKmh: 0,
       stepCount: 0,
+      calories: 0,
       startTime: Date.now(),
     }),
 
   addCoordinate: (coord) => {
-    const { routeCoordinates, distanceMeters, elapsedSeconds } = get();
+    const { routeCoordinates, distanceMeters, elapsedSeconds, selectedMode } = get();
     const prev =
       routeCoordinates.length > 0
         ? routeCoordinates[routeCoordinates.length - 1]
@@ -85,15 +90,17 @@ export const useWalkStore = create<WalkState>((set, get) => ({
     let newSpeed = 0;
     if (prev) {
       delta = haversineDistance(prev, coord);
-      // Speed: meters per elapsed second tick (approximate)
       newSpeed = elapsedSeconds > 0 ? delta * 3.6 : 0;
     }
+
+    const newDistance = distanceMeters + delta;
 
     set((state) => ({
       routeCoordinates: [...state.routeCoordinates, coord],
       startCoordinate: state.startCoordinate ?? coord,
-      distanceMeters: distanceMeters + delta,
+      distanceMeters: newDistance,
       speedKmh: newSpeed > 0 ? newSpeed : state.speedKmh,
+      calories: (newDistance / 1000) * KCAL_PER_KM[selectedMode],
     }));
   },
 
@@ -102,8 +109,16 @@ export const useWalkStore = create<WalkState>((set, get) => ({
   setStepCount: (steps) => set({ stepCount: steps }),
 
   finishWalk: async () => {
-    const { selectedMode, routeCoordinates, distanceMeters, elapsedSeconds, stepCount, startCoordinate, startTime } =
-      get();
+    const {
+      selectedMode,
+      routeCoordinates,
+      distanceMeters,
+      elapsedSeconds,
+      stepCount,
+      calories,
+      startCoordinate,
+      startTime,
+    } = get();
 
     const endCoord =
       routeCoordinates.length > 0
@@ -117,6 +132,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       distanceMeters,
       durationSeconds: elapsedSeconds,
       stepCount,
+      calories,
       routeCoordinates: JSON.stringify(routeCoordinates),
       startLat: startCoordinate?.latitude ?? null,
       startLng: startCoordinate?.longitude ?? null,
@@ -135,6 +151,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       distanceMeters: 0,
       speedKmh: 0,
       stepCount: 0,
+      calories: 0,
       startTime: null,
     }),
 }));
