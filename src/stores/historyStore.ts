@@ -14,6 +14,7 @@ export interface WeekStats {
   totalKm: number;
   totalWalks: number;
   totalSeconds: number;
+  totalCalories: number;
   byMode: { fast: number; slow: number; parkGame: number };
   dailyKm: number[];   // 7 elements, index 0 = Monday of current week
   dayLabels: string[]; // ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -99,18 +100,19 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     let totalKm = 0;
     let totalWalks = 0;
     let totalSeconds = 0;
+    let totalCalories = 0;
     const dailyKm = [0, 0, 0, 0, 0, 0, 0];
 
     for (const s of thisWeek) {
       totalKm += s.distanceMeters / 1000;
       totalWalks += 1;
       totalSeconds += s.durationSeconds;
+      totalCalories += s.calories ?? 0;
 
       const mode = s.mode as keyof typeof byMode;
       if (mode in byMode) byMode[mode] += 1;
 
-      // Day index: 0 = Monday, 6 = Sunday
-      const sessionDay = new Date(s.date).getDay(); // 0=Sun
+      const sessionDay = new Date(s.date).getDay();
       const idx = sessionDay === 0 ? 6 : sessionDay - 1;
       dailyKm[idx] += s.distanceMeters / 1000;
     }
@@ -119,6 +121,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       totalKm,
       totalWalks,
       totalSeconds,
+      totalCalories: Math.round(totalCalories),
       byMode,
       dailyKm,
       dayLabels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
