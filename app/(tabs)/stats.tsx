@@ -19,34 +19,28 @@ import { PieChart, LineChart } from 'react-native-chart-kit';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useNotificationStore, Reminder } from '@/stores/notificationStore';
+import { theme } from '@/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CHART_WIDTH = SCREEN_WIDTH - 32;
+const CHART_WIDTH = SCREEN_WIDTH - 64;
 const MAX_REMINDERS = 5;
 const SWIPE_ACTION_WIDTH = 72;
-const SWIPE_DELETE_COLOR = '#FF3B30';
-const SWIPE_EDIT_COLOR = '#FF9500';
 
-/** Russian strings via Unicode escapes (ASCII source file). */
 const S = {
-  km: '\u043a\u043c',
-  walks: '\u043f\u0440\u043e\u0433\u0443\u043b\u043e\u043a',
-  timeNoun: '\u0432\u0440\u0435\u043c\u044f',
-  kcal: '\u043a\u043a\u0430\u043b',
-  modeFast: '\u041f\u0440\u043e\u0431\u0435\u0436\u043a\u0430',
-  modeSlow: '\u041f\u0440\u043e\u0433\u0443\u043b\u043a\u0430',
-  modePark: '\u0418\u0433\u0440\u0430 \u0432 \u043f\u0430\u0440\u043a\u0435',
-  byModes: '\u041f\u043e \u0440\u0435\u0436\u0438\u043c\u0430\u043c',
-  noWalksWeek:
-    '\u041d\u0435\u0442 \u043f\u0440\u043e\u0433\u0443\u043b\u043e\u043a \u0437\u0430 \u044d\u0442\u0443 \u043d\u0435\u0434\u0435\u043b\u044e',
-  distanceWeek:
-    '\u0414\u0438\u0441\u0442\u0430\u043d\u0446\u0438\u044f \u0437\u0430 \u043d\u0435\u0434\u0435\u043b\u044e',
-  reminders: '\u041d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u044f',
-  addReminder:
-    '\u002b \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u0435',
-  scheduleErrorTitle: '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435',
-  scheduleErrorBody:
-    '\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437 \u0438\u043b\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u0438\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.',
+  km: 'км',
+  walks: 'прогулок',
+  timeNoun: 'время',
+  kcal: 'ккал',
+  modeFast: 'Пробежка',
+  modeSlow: 'Прогулка',
+  modePark: 'Игра в парке',
+  byModes: 'По режимам',
+  noWalksWeek: 'Нет прогулок за эту неделю',
+  distanceWeek: 'Дистанция за неделю',
+  reminders: 'Напоминания',
+  addReminder: '+ Добавить напоминание',
+  scheduleErrorTitle: 'Не удалось настроить уведомление',
+  scheduleErrorBody: 'Попробуйте ещё раз или проверьте разрешения в настройках.',
   ok: 'OK',
 };
 
@@ -65,9 +59,7 @@ const MODE_LABELS: Record<keyof typeof PIE_COLORS, string> = {
 function formatHours(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const ch = '\u0447';
-  const min = '\u043c\u0438\u043d';
-  return h > 0 ? `${h}${ch} ${m}${min}` : `${m}${min}`;
+  return h > 0 ? `${h}ч ${m}мин` : `${m}мин`;
 }
 
 function padTwo(n: number): string {
@@ -75,7 +67,6 @@ function padTwo(n: number): string {
 }
 
 type PickerMode = { type: 'add' } | { type: 'edit'; id: string };
-
 type SwipeableInstance = React.ElementRef<typeof Swipeable>;
 
 export default function StatsScreen() {
@@ -110,14 +101,12 @@ export default function StatsScreen() {
       name: MODE_LABELS[mode],
       population: count,
       color: PIE_COLORS[mode],
-      legendFontColor: '#1C1C1E',
+      legendFontColor: theme.colors.textPrimary,
       legendFontSize: 13,
     }));
 
   const currentReminder =
-    pickerMode?.type === 'edit'
-      ? reminders.find((r) => r.id === pickerMode.id)
-      : null;
+    pickerMode?.type === 'edit' ? reminders.find((r) => r.id === pickerMode.id) : null;
 
   const pickerDate = new Date();
   if (currentReminder) {
@@ -132,7 +121,6 @@ export default function StatsScreen() {
     const h = selected.getHours();
     const m = selected.getMinutes();
     const mode = pickerMode;
-
     try {
       if (mode?.type === 'add') {
         await addReminder(h, m);
@@ -148,13 +136,18 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{stats.totalKm.toFixed(1)}</Text>
+          <Text style={[styles.summaryValue, { color: theme.colors.accent }]}>
+            {stats.totalKm.toFixed(1)}
+          </Text>
           <Text style={styles.summaryLabel}>{S.km}</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{stats.totalWalks}</Text>
+          <Text style={[styles.summaryValue, { color: theme.colors.green }]}>
+            {stats.totalWalks}
+          </Text>
           <Text style={styles.summaryLabel}>{S.walks}</Text>
         </View>
         <View style={styles.summaryCard}>
@@ -162,11 +155,14 @@ export default function StatsScreen() {
           <Text style={styles.summaryLabel}>{S.timeNoun}</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{stats.totalCalories}</Text>
+          <Text style={[styles.summaryValue, { color: theme.colors.orange }]}>
+            {stats.totalCalories}
+          </Text>
           <Text style={styles.summaryLabel}>{S.kcal}</Text>
         </View>
       </View>
 
+      {/* Pie chart section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{S.byModes}</Text>
         {hasData ? (
@@ -175,8 +171,8 @@ export default function StatsScreen() {
             width={CHART_WIDTH}
             height={160}
             chartConfig={{
-              color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-              labelColor: () => '#1C1C1E',
+              color: (opacity = 1) => `rgba(255,255,255,${opacity})`,
+              labelColor: () => theme.colors.textPrimary,
             }}
             accessor="population"
             backgroundColor="transparent"
@@ -190,6 +186,7 @@ export default function StatsScreen() {
         )}
       </View>
 
+      {/* Line chart section */}
       {hasDistanceData && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{S.distanceWeek}</Text>
@@ -202,22 +199,23 @@ export default function StatsScreen() {
             height={160}
             yAxisSuffix={` ${S.km}`}
             chartConfig={{
-              backgroundColor: '#fff',
-              backgroundGradientFrom: '#fff',
-              backgroundGradientTo: '#fff',
+              backgroundColor: theme.colors.bgDeep,
+              backgroundGradientFrom: theme.colors.bg,
+              backgroundGradientTo: theme.colors.bgDeep,
               decimalPlaces: 1,
-              color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-              labelColor: () => '#8E8E93',
-              propsForDots: { r: '4', strokeWidth: '2', stroke: '#007AFF' },
-              propsForBackgroundLines: { strokeWidth: 0.5, stroke: '#E5E5EA' },
+              color: (opacity = 1) => `rgba(79,142,247,${opacity})`,
+              labelColor: () => theme.colors.textSecondary,
+              propsForDots: { r: '4', strokeWidth: '2', stroke: theme.colors.accent },
+              propsForBackgroundLines: { strokeWidth: 0.5, stroke: theme.colors.glassBorder },
             }}
             bezier
-            style={{ borderRadius: 12 }}
+            style={{ borderRadius: theme.radius.md }}
             fromZero
           />
         </View>
       )}
 
+      {/* Reminders section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{S.reminders}</Text>
 
@@ -240,7 +238,7 @@ export default function StatsScreen() {
             renderLeftActions={() => (
               <View style={styles.swipeActionColumn}>
                 <RectButton
-                  style={[styles.swipeActionInner, { backgroundColor: SWIPE_EDIT_COLOR }]}
+                  style={[styles.swipeActionInner, { backgroundColor: theme.colors.orange }]}
                   onPress={() => {
                     swipeRefs.current.get(reminder.id)?.close();
                     setPickerMode({ type: 'edit', id: reminder.id });
@@ -253,7 +251,7 @@ export default function StatsScreen() {
             renderRightActions={() => (
               <View style={styles.swipeActionColumn}>
                 <RectButton
-                  style={[styles.swipeActionInner, { backgroundColor: SWIPE_DELETE_COLOR }]}
+                  style={[styles.swipeActionInner, { backgroundColor: theme.colors.red }]}
                   onPress={() => {
                     swipeRefs.current.get(reminder.id)?.close();
                     removeReminder(reminder.id);
@@ -275,10 +273,8 @@ export default function StatsScreen() {
               </Pressable>
               <Switch
                 value={reminder.enabled}
-                onValueChange={(v) => {
-                  toggleReminder(reminder.id, v);
-                }}
-                trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+                onValueChange={(v) => toggleReminder(reminder.id, v)}
+                trackColor={{ false: theme.colors.glassBorder, true: theme.colors.green }}
                 thumbColor="#fff"
                 style={styles.reminderSwitch}
               />
@@ -310,42 +306,39 @@ export default function StatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7' },
-  content: { paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: theme.colors.bg },
+  content: { paddingBottom: theme.tabBarHeight + 24 },
   summaryRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     margin: 16,
     marginBottom: 8,
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
     paddingVertical: 14,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
   },
-  summaryValue: { fontSize: 20, fontWeight: '700', color: '#1C1C1E' },
-  summaryLabel: { fontSize: 12, color: '#8E8E93', marginTop: 2 },
+  summaryValue: { fontSize: 18, fontWeight: '700', color: theme.colors.textPrimary },
+  summaryLabel: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
   section: {
     marginHorizontal: 16,
     marginTop: 10,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
     padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    overflow: 'hidden',
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: theme.colors.textPrimary,
     marginBottom: 12,
   },
   emptyChart: {
@@ -353,20 +346,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyText: { fontSize: 14, color: '#8E8E93' },
+  emptyText: { fontSize: 14, color: theme.colors.textSecondary },
   swipeRowContainer: {
     overflow: 'hidden',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: theme.colors.glassBorder,
   },
   reminderRowChildren: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
-    backgroundColor: '#fff',
   },
   swipeActionColumn: {
     flex: 1,
@@ -381,22 +373,22 @@ const styles = StyleSheet.create({
   reminderTime: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#007AFF',
+    color: theme.colors.accent,
   },
-  reminderTimeDisabled: { color: '#C7C7CC' },
+  reminderTimeDisabled: { color: theme.colors.textMuted },
   reminderSwitch: { marginRight: 4 },
   addBtn: {
     marginTop: 12,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#007AFF',
-    borderRadius: 10,
+    borderColor: theme.colors.glassBorder,
+    borderRadius: theme.radius.sm,
     borderStyle: 'dashed',
   },
   addBtnText: {
     fontSize: 15,
-    color: '#007AFF',
+    color: theme.colors.accent,
     fontWeight: '500',
   },
   pickerWrap: {
