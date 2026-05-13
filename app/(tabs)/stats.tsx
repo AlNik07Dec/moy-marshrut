@@ -32,6 +32,7 @@ const S = {
   km: '\u043a\u043c',
   walks: '\u043f\u0440\u043e\u0433\u0443\u043b\u043e\u043a',
   timeNoun: '\u0432\u0440\u0435\u043c\u044f',
+  kcal: '\u043a\u043a\u0430\u043b',
   modeFast: '\u041f\u0440\u043e\u0431\u0435\u0436\u043a\u0430',
   modeSlow: '\u041f\u0440\u043e\u0433\u0443\u043b\u043a\u0430',
   modePark: '\u0418\u0433\u0440\u0430 \u0432 \u043f\u0430\u0440\u043a\u0435',
@@ -159,6 +160,10 @@ export default function StatsScreen() {
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{formatHours(stats.totalSeconds)}</Text>
           <Text style={styles.summaryLabel}>{S.timeNoun}</Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryValue}>{stats.totalCalories}</Text>
+          <Text style={styles.summaryLabel}>{S.kcal}</Text>
         </View>
       </View>
 
