@@ -80,7 +80,7 @@ export const useWalkStore = create<WalkState>((set, get) => ({
     }),
 
   addCoordinate: (coord) => {
-    const { routeCoordinates, distanceMeters, elapsedSeconds, selectedMode } = get();
+    const { routeCoordinates, elapsedSeconds, selectedMode } = get();
     const prev =
       routeCoordinates.length > 0
         ? routeCoordinates[routeCoordinates.length - 1]
@@ -93,15 +93,16 @@ export const useWalkStore = create<WalkState>((set, get) => ({
       newSpeed = elapsedSeconds > 0 ? delta * 3.6 : 0;
     }
 
-    const newDistance = distanceMeters + delta;
-
-    set((state) => ({
-      routeCoordinates: [...state.routeCoordinates, coord],
-      startCoordinate: state.startCoordinate ?? coord,
-      distanceMeters: newDistance,
-      speedKmh: newSpeed > 0 ? newSpeed : state.speedKmh,
-      calories: (newDistance / 1000) * KCAL_PER_KM[selectedMode],
-    }));
+    set((state) => {
+      const newDist = state.distanceMeters + delta;
+      return {
+        routeCoordinates: [...state.routeCoordinates, coord],
+        startCoordinate: state.startCoordinate ?? coord,
+        distanceMeters: newDist,
+        speedKmh: newSpeed > 0 ? newSpeed : state.speedKmh,
+        calories: (newDist / 1000) * KCAL_PER_KM[selectedMode],
+      };
+    });
   },
 
   tickSecond: () => set((state) => ({ elapsedSeconds: state.elapsedSeconds + 1 })),
