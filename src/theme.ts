@@ -1,0 +1,27 @@
+export const theme = {
+  colors: {
+    bg:           '#0a0a14',
+    bgDeep:       '#060a12',
+    glass:        'rgba(79,142,247,0.10)',
+    glassDark:    'rgba(8,16,32,0.65)',
+    glassBorder:  'rgba(79,142,247,0.20)',
+    accent:       '#4f8ef7',
+    green:        '#34C759',
+    red:          '#FF3B30',
+    orange:       '#FF9500',
+    chartFast:    '#e94560',
+    chartSlow:    '#4f8ef7',
+    chartPark:    '#4CAF50',
+    textPrimary:  '#FFFFFF',
+    textSecondary:'rgba(255,255,255,0.45)',
+    textMuted:    'rgba(255,255,255,0.25)',
+  },
+  radius: {
+    sm:   12,
+    md:   14,
+    lg:   18,
+    xl:   22,
+    pill: 50,
+  },
+  tabBarHeight: 88,
+} as const;
