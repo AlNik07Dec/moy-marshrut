@@ -10,6 +10,7 @@ import {
   Platform,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Swipeable, RectButton } from 'react-native-gesture-handler';
@@ -136,6 +137,7 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <StatusBar barStyle="light-content" />
       {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>

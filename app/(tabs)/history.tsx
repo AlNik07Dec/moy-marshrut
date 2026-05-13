@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Pressable,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { BarChart } from 'react-native-chart-kit';
@@ -119,6 +120,7 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
       {/* Filter toggle */}
       <View style={styles.filterRow}>
         <FilterButton label="Неделя" active={filter === 'week'} onPress={() => setFilter('week')} />
