@@ -1,42 +1,32 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { GlassTabBar } from '../../src/components/GlassTabBar';
+import { theme } from '../../src/theme';
 
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props: BottomTabBarProps) => <GlassTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-        headerStyle: { backgroundColor: '#fff' },
-        headerTitleStyle: { fontWeight: '600' },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTitleStyle: { color: theme.colors.textPrimary, fontWeight: '600' },
+        headerTintColor: theme.colors.textPrimary,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Walk&Paw',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size} color={color} />
-          ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen
         name="history"
-        options={{
-          title: 'История',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
-          ),
-        }}
+        options={{ title: 'История' }}
       />
       <Tabs.Screen
         name="stats"
-        options={{
-          title: 'Статистика',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} />
-          ),
-        }}
+        options={{ title: 'Статистика' }}
       />
     </Tabs>
   );
