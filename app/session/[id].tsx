@@ -5,15 +5,16 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchSessionById, WalkSession } from '@/db/database';
 import { StatCard } from '@/components/StatCard';
 import { HomeMarker } from '@/components/HomeMarker';
 import { WALK_MODES } from '@/stores/walkStore';
 import { formatTime } from '@/utils/formatTime';
+import { theme } from '@/theme';
 
 const MODE_LABEL: Record<string, string> = Object.fromEntries(
   WALK_MODES.map((m) => [m.id, `${m.icon} ${m.label}`])
@@ -39,6 +40,7 @@ function formatDateFull(ts: number): string {
 export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [session, setSession] = useState<WalkSession | null | undefined>(undefined);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!id) return;
@@ -47,17 +49,17 @@ export default function SessionDetailScreen() {
 
   if (session === undefined) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </SafeAreaView>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color={theme.colors.accent} />
+      </View>
     );
   }
 
   if (session === null) {
     return (
-      <SafeAreaView style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
         <Text style={styles.notFound}>Прогулка не найдена</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -70,18 +72,20 @@ export default function SessionDetailScreen() {
   })();
 
   const hasRoute = coords.length > 1;
-  const centerCoord = coords.length > 0
-    ? coords[0]
-    : session.startLat != null && session.startLng != null
-      ? { latitude: session.startLat, longitude: session.startLng }
-      : { latitude: 55.7558, longitude: 37.6176 };
+  const centerCoord =
+    coords.length > 0
+      ? coords[0]
+      : session.startLat != null && session.startLng != null
+        ? { latitude: session.startLat, longitude: session.startLng }
+        : { latitude: 55.7558, longitude: 37.6176 };
 
-  const endTime = session.startTime != null
-    ? session.startTime + session.durationSeconds * 1000
-    : session.date;
+  const endTime =
+    session.startTime != null
+      ? session.startTime + session.durationSeconds * 1000
+      : session.date;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Map */}
         <MapView
@@ -100,7 +104,7 @@ export default function SessionDetailScreen() {
           {hasRoute && (
             <Polyline
               coordinates={coords}
-              strokeColor="#007AFF"
+              strokeColor={theme.colors.accent}
               strokeWidth={4}
               lineJoin="round"
               lineCap="round"
@@ -112,12 +116,8 @@ export default function SessionDetailScreen() {
         <View style={styles.body}>
           {/* Mode + date */}
           <View style={styles.headerRow}>
-            <Text style={styles.modeLabel}>
-              {MODE_LABEL[session.mode] ?? session.mode}
-            </Text>
-            <Text style={styles.dateLabel}>
-              {formatDateFull(session.startTime ?? session.date)}
-            </Text>
+            <Text style={styles.modeLabel}>{MODE_LABEL[session.mode] ?? session.mode}</Text>
+            <Text style={styles.dateLabel}>{formatDateFull(session.startTime ?? session.date)}</Text>
           </View>
 
           {/* Start / end time */}
@@ -141,35 +141,37 @@ export default function SessionDetailScreen() {
             <StatCard
               value={(session.distanceMeters / 1000).toFixed(2)}
               unit="км"
-              valueColor="#007AFF"
+              valueColor={theme.colors.accent}
             />
             {session.stepCount > 0 && (
               <StatCard
                 value={session.stepCount.toLocaleString('ru-RU')}
                 unit="шаги"
-                valueColor="#34C759"
+                valueColor={theme.colors.green}
               />
             )}
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFound: { fontSize: 16, color: '#8E8E93' },
+  container: { flex: 1, backgroundColor: theme.colors.bg },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.bg },
+  notFound: { fontSize: 16, color: theme.colors.textSecondary },
   scroll: { flexGrow: 1 },
   map: { height: 280, width: '100%' },
   body: { padding: 16, gap: 12 },
   headerRow: { gap: 2 },
-  modeLabel: { fontSize: 20, fontWeight: '700', color: '#1C1C1E' },
-  dateLabel: { fontSize: 14, color: '#8E8E93' },
+  modeLabel: { fontSize: 20, fontWeight: '700', color: theme.colors.textPrimary },
+  dateLabel: { fontSize: 14, color: theme.colors.textSecondary },
   timesCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
     paddingHorizontal: 14,
     paddingVertical: 4,
   },
@@ -179,8 +181,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
   },
-  timesKey: { fontSize: 15, color: '#8E8E93' },
-  timesValue: { fontSize: 15, fontWeight: '600', color: '#1C1C1E' },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E5EA' },
+  timesKey: { fontSize: 15, color: theme.colors.textSecondary },
+  timesValue: { fontSize: 15, fontWeight: '600', color: theme.colors.textPrimary },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.glassBorder },
   statsRow: { flexDirection: 'row', gap: 10 },
 });
