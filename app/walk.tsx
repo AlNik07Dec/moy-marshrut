@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,10 +6,16 @@ import {
   StyleSheet,
   Alert,
   StatusBar,
+  Platform,
+  Share,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
+import * as Sharing from 'expo-sharing';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWalkStore } from '@/stores/walkStore';
 import { startTracking, stopTracking } from '@/services/locationService';
@@ -25,10 +31,24 @@ const FINISH_LABEL: Record<string, string> = {
   parkGame: '⏹  Завершить игру в парке',
 };
 
+const SUMMARY_TITLE: Record<string, string> = {
+  fast: '🏁 Пробежка завершена',
+  slow: '🏁 Прогулка завершена',
+  parkGame: '🎾 Игра в парке завершена',
+};
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  if (m < 60) return `${m} мин`;
+  return `${Math.floor(m / 60)} ч ${m % 60} мин`;
+}
+
 export default function WalkScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
+  const [showSummary, setShowSummary] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const {
     routeCoordinates,
@@ -79,8 +99,33 @@ export default function WalkScreen() {
   const handleFinish = useCallback(async () => {
     stopTracking();
     await finishWalk();
-    router.back();
-  }, [finishWalk, router]);
+    setShowSummary(true);
+  }, [finishWalk]);
+
+  const handleSummaryShare = useCallback(async () => {
+    if (isSharing || !mapRef.current) return;
+    setIsSharing(true);
+    try {
+      const uri = await mapRef.current.takeSnapshot({
+        width: 800,
+        height: 600,
+        format: 'png',
+        quality: 0.9,
+        result: 'file',
+      });
+      const km = (distanceMeters / 1000).toFixed(1);
+      const text = `Прогулка с собакой: ${km} км, ${formatDuration(elapsedSeconds)}`;
+      if (Platform.OS === 'ios') {
+        await Share.share({ message: text, url: uri });
+      } else {
+        await Sharing.shareAsync(uri, { dialogTitle: text, mimeType: 'image/png' });
+      }
+    } catch {
+      // пользователь закрыл шит
+    } finally {
+      setIsSharing(false);
+    }
+  }, [isSharing, distanceMeters, elapsedSeconds]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
