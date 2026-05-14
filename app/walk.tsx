@@ -180,6 +180,60 @@ export default function WalkScreen() {
           </LinearGradient>
         </TouchableOpacity>
       </View>
+
+      {/* Post-walk summary overlay */}
+      {showSummary && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+          <View style={[styles.summaryContainer, { paddingBottom: insets.bottom + 16 }]}>
+            <GlassCard style={styles.summaryCard} padding={20}>
+              <Text style={styles.summaryTitle}>{SUMMARY_TITLE[selectedMode]}</Text>
+              <View style={styles.summaryStats}>
+                <StatCard value={formatTime(elapsedSeconds)} unit="время" />
+                <StatCard
+                  value={(distanceMeters / 1000).toFixed(2)}
+                  unit="км"
+                  valueColor={theme.colors.accent}
+                />
+                <StatCard
+                  value={String(Math.round(calories))}
+                  unit="ккал"
+                  valueColor={theme.colors.orange}
+                />
+              </View>
+              <View style={styles.summaryButtons}>
+                <TouchableOpacity
+                  style={styles.summaryShareBtn}
+                  onPress={handleSummaryShare}
+                  disabled={isSharing}
+                  activeOpacity={0.8}
+                >
+                  {isSharing ? (
+                    <ActivityIndicator size="small" color={theme.colors.accent} />
+                  ) : (
+                    <Ionicons name="share-outline" size={18} color={theme.colors.accent} />
+                  )}
+                  <Text style={styles.summaryShareText}>Поделиться</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.summaryDoneOuter}
+                  onPress={() => router.back()}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={[theme.colors.accent, '#2a6fd4']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.summaryDoneBtn}
+                  >
+                    <Text style={styles.summaryDoneText}>Готово</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </GlassCard>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -223,6 +277,60 @@ const styles = StyleSheet.create({
   finishButtonText: {
     color: '#fff',
     fontSize: 17,
+    fontWeight: '600',
+  },
+  summaryContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+  },
+  summaryCard: {
+  },
+  summaryTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.textPrimary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  summaryStats: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
+  },
+  summaryButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  summaryShareBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.accent,
+  },
+  summaryShareText: {
+    color: theme.colors.accent,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  summaryDoneOuter: {
+    flex: 1,
+    borderRadius: theme.radius.md,
+    overflow: 'hidden',
+  },
+  summaryDoneBtn: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: theme.radius.md,
+  },
+  summaryDoneText: {
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
   },
 });
