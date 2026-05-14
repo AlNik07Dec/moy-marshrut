@@ -98,9 +98,13 @@ export default function WalkScreen() {
 
   const handleFinish = useCallback(async () => {
     stopTracking();
-    await finishWalk();
-    setShowSummary(true);
-  }, [finishWalk]);
+    try {
+      await finishWalk();
+      setShowSummary(true);
+    } catch {
+      router.back();
+    }
+  }, [finishWalk, router]);
 
   const handleSummaryShare = useCallback(async () => {
     if (isSharing || !mapRef.current) return;
@@ -186,7 +190,7 @@ export default function WalkScreen() {
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={[styles.summaryContainer, { paddingBottom: insets.bottom + 16 }]}>
-            <GlassCard style={styles.summaryCard} padding={20}>
+            <GlassCard padding={20}>
               <Text style={styles.summaryTitle}>{SUMMARY_TITLE[selectedMode]}</Text>
               <View style={styles.summaryStats}>
                 <StatCard value={formatTime(elapsedSeconds)} unit="время" />
@@ -283,8 +287,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
-  },
-  summaryCard: {
   },
   summaryTitle: {
     fontSize: 20,
