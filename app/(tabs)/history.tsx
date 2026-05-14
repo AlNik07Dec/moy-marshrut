@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,20 @@ import {
   Pressable,
   Dimensions,
   StatusBar,
+  Platform,
+  Share,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { Ionicons } from '@expo/vector-icons';
+import * as Sharing from 'expo-sharing';
 
 import { BarChart } from 'react-native-chart-kit';
 import { useHistoryStore, HistoryFilter, DayGroup } from '@/stores/historyStore';
 import { WalkSession } from '@/db/database';
 import { WALK_MODES } from '@/stores/walkStore';
 import { theme } from '@/theme';
+import { HomeMarker } from '@/components/HomeMarker';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 32;
@@ -34,6 +40,28 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
+function parseCoords(json: string): { latitude: number; longitude: number }[] {
+  try { return JSON.parse(json); } catch { return []; }
+}
+
+function computeRegion(coords: { latitude: number; longitude: number }[]) {
+  if (coords.length === 0) {
+    return { latitude: 55.7558, longitude: 37.6176, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+  }
+  let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+  for (const c of coords) {
+    minLat = Math.min(minLat, c.latitude); maxLat = Math.max(maxLat, c.latitude);
+    minLng = Math.min(minLng, c.longitude); maxLng = Math.max(maxLng, c.longitude);
+  }
+  const pad = 0.003;
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max(maxLat - minLat + pad * 2, pad * 2),
+    longitudeDelta: Math.max(maxLng - minLng + pad * 2, pad * 2),
+  };
+}
+
 function FilterButton({
   label,
   active,
@@ -50,9 +78,19 @@ function FilterButton({
   );
 }
 
-function SessionRow({ session }: { session: WalkSession }) {
+function SessionRow({
+  session,
+  onShare,
+  sharingId,
+}: {
+  session: WalkSession;
+  onShare: (s: WalkSession) => void;
+  sharingId: number | null;
+}) {
   const router = useRouter();
   const km = (session.distanceMeters / 1000).toFixed(2);
+  const isCurrentlySharing = sharingId === session.id;
+
   return (
     <Pressable
       style={({ pressed }) => [styles.sessionRow, pressed && styles.sessionRowPressed]}
@@ -68,7 +106,22 @@ function SessionRow({ session }: { session: WalkSession }) {
           <Text style={styles.sessionSteps}>{session.stepCount} шагов</Text>
         )}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Pressable
+        style={styles.shareBtn}
+        hitSlop={8}
+        disabled={sharingId !== null}
+        onPress={() => onShare(session)}
+      >
+        {isCurrentlySharing ? (
+          <ActivityIndicator size="small" color={theme.colors.accent} />
+        ) : (
+          <Ionicons
+            name="share-outline"
+            size={20}
+            color={sharingId !== null ? theme.colors.textMuted : theme.colors.accent}
+          />
+        )}
+      </Pressable>
     </Pressable>
   );
 }
@@ -76,6 +129,9 @@ function SessionRow({ session }: { session: WalkSession }) {
 export default function HistoryScreen() {
   const { filter, setFilter, loadSessions, filteredSessions, sessionsByDay, isLoading } =
     useHistoryStore();
+
+  const [sharingSession, setSharingSession] = useState<WalkSession | null>(null);
+  const shareMapRef = useRef<MapView>(null);
 
   useFocusEffect(useCallback(() => {
     StatusBar.setBarStyle('light-content');
@@ -89,6 +145,11 @@ export default function HistoryScreen() {
 
   const groups = sessionsByDay();
   const allFiltered = filteredSessions();
+
+  function handleShare(session: WalkSession) {
+    if (sharingSession !== null) return;
+    setSharingSession(session);
+  }
 
   const chartData = (() => {
     const days = filter === 'week' ? 7 : 30;
@@ -176,13 +237,72 @@ export default function HistoryScreen() {
             <View style={styles.dayGroup}>
               <Text style={styles.dayHeader}>{formatDate(group.date)}</Text>
               {group.sessions.map((s) => (
-                <SessionRow key={s.id} session={s} />
+                <SessionRow
+                  key={s.id}
+                  session={s}
+                  onShare={handleShare}
+                  sharingId={sharingSession?.id ?? null}
+                />
               ))}
             </View>
           )}
           contentContainerStyle={{ paddingBottom: theme.tabBarHeight + 16 }}
         />
       )}
+
+      {/* Скрытая карта для снимка маршрута */}
+      {sharingSession !== null && (() => {
+        const session = sharingSession;
+        const coords = parseCoords(session.routeCoordinates);
+        return (
+          <View style={styles.hiddenMap} pointerEvents="none">
+            <MapView
+              ref={shareMapRef}
+              provider={PROVIDER_DEFAULT}
+              style={StyleSheet.absoluteFill}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              initialRegion={computeRegion(coords)}
+              onMapReady={async () => {
+                await new Promise((r) => setTimeout(r, 700));
+                try {
+                  const uri = await shareMapRef.current!.takeSnapshot({
+                    width: 800,
+                    height: 600,
+                    format: 'png',
+                    quality: 0.9,
+                    result: 'file',
+                  });
+                  const km = (session.distanceMeters / 1000).toFixed(1);
+                  const mins = formatDuration(session.durationSeconds);
+                  const text = `Прогулка с собакой: ${km} км, ${mins}`;
+                  if (Platform.OS === 'ios') {
+                    await Share.share({ message: text, url: uri });
+                  } else {
+                    await Sharing.shareAsync(uri, { dialogTitle: text, mimeType: 'image/png' });
+                  }
+                } catch {
+                  // пользователь закрыл шит или снимок не удался
+                } finally {
+                  setSharingSession(null);
+                }
+              }}
+            >
+              {coords.length > 1 && (
+                <Polyline
+                  coordinates={coords}
+                  strokeColor={theme.colors.accent}
+                  strokeWidth={4}
+                  lineJoin="round"
+                  lineCap="round"
+                />
+              )}
+              {coords.length > 0 && <HomeMarker coordinate={coords[0]} />}
+            </MapView>
+          </View>
+        );
+      })()}
     </View>
   );
 }
@@ -256,8 +376,9 @@ const styles = StyleSheet.create({
   sessionStats: { alignItems: 'flex-end', marginRight: 8 },
   sessionDistance: { fontSize: 17, fontWeight: '700', color: theme.colors.green },
   sessionSteps: { fontSize: 17, fontWeight: '700', color: theme.colors.accent, marginTop: 2 },
-  chevron: { fontSize: 20, color: theme.colors.textMuted, fontWeight: '300' },
+  shareBtn: { paddingHorizontal: 6, paddingVertical: 4, marginLeft: 4, minWidth: 32, alignItems: 'center' },
   emptyIcon: { fontSize: 56 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.textPrimary },
   emptySub: { fontSize: 14, color: theme.colors.textSecondary, textAlign: 'center', paddingHorizontal: 32 },
+  hiddenMap: { position: 'absolute', left: -1000, top: -1000, width: 400, height: 300 },
 });
