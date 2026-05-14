@@ -44,22 +44,16 @@ export default function WalkScreen() {
   const lastCoordRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
-    if (routeCoordinates.length === 0) return;
+    if (routeCoordinates.length === 0 || !mapRef.current) return;
     const latest = routeCoordinates[routeCoordinates.length - 1];
     if (
       lastCoordRef.current?.latitude === latest.latitude &&
       lastCoordRef.current?.longitude === latest.longitude
     ) return;
     lastCoordRef.current = latest;
-    mapRef.current?.animateToRegion(
-      {
-        latitude: latest.latitude,
-        longitude: latest.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      },
-      400
-    );
+    mapRef.current.getCamera().then((camera) => {
+      mapRef.current?.animateCamera({ ...camera, center: latest }, { duration: 400 });
+    });
   }, [routeCoordinates]);
 
   useEffect(() => {
