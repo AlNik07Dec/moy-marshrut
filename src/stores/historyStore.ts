@@ -16,8 +16,8 @@ export interface WeekStats {
   totalSeconds: number;
   totalCalories: number;
   byMode: { fast: number; slow: number; parkGame: number };
-  dailyKm: number[];   // 7 elements, index 0 = Monday of current week
-  dayLabels: string[]; // ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
+  dailyKm: number[];   // 7 elements for week, 30 for month
+  dayLabels: string[]; // matching labels array
 }
 
 interface HistoryState {
@@ -31,7 +31,7 @@ interface HistoryState {
   // Derived
   filteredSessions: () => WalkSession[];
   sessionsByDay: () => DayGroup[];
-  weekStats: () => WeekStats;
+  periodStats: (filter: HistoryFilter) => WeekStats;
 }
 
 const DAY_MS = 86400 * 1000;
@@ -88,33 +88,78 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     return Array.from(map.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
   },
 
-  weekStats: (): WeekStats => {
+  periodStats: (filter: HistoryFilter): WeekStats => {
     const { sessions } = get();
-    const monday = getMondayOf(new Date());
-    const weekStart = monday.getTime();
-    const weekEnd = weekStart + 7 * DAY_MS;
 
-    const thisWeek = sessions.filter((s) => s.date >= weekStart && s.date < weekEnd);
+    if (filter === 'week') {
+      const monday = getMondayOf(new Date());
+      const weekStart = monday.getTime();
+      const weekEnd = weekStart + 7 * DAY_MS;
+      const thisWeek = sessions.filter((s) => s.date >= weekStart && s.date < weekEnd);
+
+      const byMode = { fast: 0, slow: 0, parkGame: 0 };
+      let totalKm = 0, totalWalks = 0, totalSeconds = 0, totalCalories = 0;
+      const dailyKm = [0, 0, 0, 0, 0, 0, 0];
+
+      for (const s of thisWeek) {
+        totalKm += s.distanceMeters / 1000;
+        totalWalks += 1;
+        totalSeconds += s.durationSeconds;
+        totalCalories += s.calories ?? 0;
+        const mode = s.mode as keyof typeof byMode;
+        if (mode in byMode) byMode[mode] += 1;
+        const sessionDay = new Date(s.date).getDay();
+        const idx = sessionDay === 0 ? 6 : sessionDay - 1;
+        dailyKm[idx] += s.distanceMeters / 1000;
+      }
+
+      return {
+        totalKm,
+        totalWalks,
+        totalSeconds,
+        totalCalories: Math.round(totalCalories),
+        byMode,
+        dailyKm,
+        dayLabels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+      };
+    }
+
+    // Month: last 30 days (index 0 = 29 days ago, index 29 = today)
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const monthStart = new Date(todayMidnight);
+    monthStart.setDate(monthStart.getDate() - 29);
+
+    const thisMonth = sessions.filter((s) => s.date >= monthStart.getTime());
+
+    const dayLabels: string[] = Array.from({ length: 30 }, (_, i) => {
+      if (i % 5 === 0 || i === 29) {
+        const d = new Date(monthStart);
+        d.setDate(d.getDate() + i);
+        return String(d.getDate());
+      }
+      return '';
+    });
 
     const byMode = { fast: 0, slow: 0, parkGame: 0 };
-    let totalKm = 0;
-    let totalWalks = 0;
-    let totalSeconds = 0;
-    let totalCalories = 0;
-    const dailyKm = [0, 0, 0, 0, 0, 0, 0];
+    let totalKm = 0, totalWalks = 0, totalSeconds = 0, totalCalories = 0;
+    const dailyKm: number[] = new Array(30).fill(0);
 
-    for (const s of thisWeek) {
+    for (const s of thisMonth) {
       totalKm += s.distanceMeters / 1000;
       totalWalks += 1;
       totalSeconds += s.durationSeconds;
       totalCalories += s.calories ?? 0;
-
       const mode = s.mode as keyof typeof byMode;
       if (mode in byMode) byMode[mode] += 1;
-
-      const sessionDay = new Date(s.date).getDay();
-      const idx = sessionDay === 0 ? 6 : sessionDay - 1;
-      dailyKm[idx] += s.distanceMeters / 1000;
+      const sessionMidnight = new Date(s.date);
+      sessionMidnight.setHours(0, 0, 0, 0);
+      const daysFromStart = Math.round(
+        (sessionMidnight.getTime() - monthStart.getTime()) / DAY_MS
+      );
+      if (daysFromStart >= 0 && daysFromStart < 30) {
+        dailyKm[daysFromStart] += s.distanceMeters / 1000;
+      }
     }
 
     return {
@@ -124,7 +169,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       totalCalories: Math.round(totalCalories),
       byMode,
       dailyKm,
-      dayLabels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+      dayLabels,
     };
   },
 }));
