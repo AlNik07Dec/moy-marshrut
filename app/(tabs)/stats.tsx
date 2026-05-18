@@ -18,7 +18,7 @@ import { useFocusEffect } from 'expo-router';
 // @ts-ignore
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useHistoryStore } from '@/stores/historyStore';
+import { useHistoryStore, HistoryFilter } from '@/stores/historyStore';
 import { useNotificationStore, Reminder } from '@/stores/notificationStore';
 import { theme } from '@/theme';
 
@@ -36,8 +36,6 @@ const S = {
   modeSlow: 'Прогулка',
   modePark: 'Игра в парке',
   byModes: 'По режимам',
-  noWalksWeek: 'Нет прогулок за эту неделю',
-  distanceWeek: 'Дистанция за неделю',
   reminders: 'Напоминания',
   addReminder: '+ Добавить напоминание',
   scheduleErrorTitle: 'Не удалось настроить уведомление',
@@ -63,6 +61,22 @@ function formatHours(seconds: number): string {
   return h > 0 ? `${h}ч ${m}мин` : `${m}мин`;
 }
 
+function FilterButton({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={[styles.filterBtn, active && styles.filterBtnActive]} onPress={onPress}>
+      <Text style={[styles.filterBtnText, active && styles.filterBtnTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function padTwo(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -71,7 +85,8 @@ type PickerMode = { type: 'add' } | { type: 'edit'; id: string };
 type SwipeableInstance = React.ElementRef<typeof Swipeable>;
 
 export default function StatsScreen() {
-  const { loadSessions, weekStats } = useHistoryStore();
+  const [filter, setFilter] = useState<HistoryFilter>('week');
+  const { loadSessions, periodStats } = useHistoryStore();
   const { reminders, addReminder, removeReminder, toggleReminder, setReminderTime } =
     useNotificationStore();
 
@@ -94,7 +109,7 @@ export default function StatsScreen() {
     }, [loadSessions]),
   );
 
-  const stats = weekStats();
+  const stats = periodStats(filter);
   const hasData = stats.totalWalks > 0;
   const hasDistanceData = stats.dailyKm.some((v) => v > 0);
 
@@ -141,6 +156,11 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Filter toggle */}
+      <View style={styles.filterRow}>
+        <FilterButton label="Неделя" active={filter === 'week'} onPress={() => setFilter('week')} />
+        <FilterButton label="Месяц" active={filter === 'month'} onPress={() => setFilter('month')} />
+      </View>
       {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
@@ -186,7 +206,9 @@ export default function StatsScreen() {
           />
         ) : (
           <View style={styles.emptyChart}>
-            <Text style={styles.emptyText}>{S.noWalksWeek}</Text>
+            <Text style={styles.emptyText}>
+              {filter === 'week' ? 'Нет прогулок за эту неделю' : 'Нет прогулок за этот месяц'}
+            </Text>
           </View>
         )}
       </View>
@@ -194,7 +216,9 @@ export default function StatsScreen() {
       {/* Line chart section */}
       {hasDistanceData && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{S.distanceWeek}</Text>
+          <Text style={styles.sectionTitle}>
+            {filter === 'week' ? 'Дистанция за неделю' : 'Дистанция за месяц'}
+          </Text>
           <LineChart
             data={{
               labels: stats.dayLabels,
@@ -213,6 +237,7 @@ export default function StatsScreen() {
               propsForDots: { r: '4', strokeWidth: '2', stroke: theme.colors.accent },
               propsForBackgroundLines: { strokeWidth: 0.5, stroke: theme.colors.glassBorder },
             }}
+            withDots={filter === 'week'}
             bezier
             style={{ borderRadius: theme.radius.md }}
             fromZero
@@ -316,9 +341,33 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     gap: 8,
-    margin: 16,
+    marginHorizontal: 16,
     marginBottom: 8,
   },
+  filterRow: {
+    flexDirection: 'row',
+    margin: 16,
+    marginBottom: 0,
+    backgroundColor: theme.colors.glassDark,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
+    padding: 3,
+    gap: 3,
+  },
+  filterBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: theme.radius.sm - 2,
+  },
+  filterBtnActive: {
+    backgroundColor: 'rgba(79,142,247,0.20)',
+    borderWidth: 1,
+    borderColor: theme.colors.glassBorder,
+  },
+  filterBtnText: { fontSize: 14, color: theme.colors.textMuted, fontWeight: '500' },
+  filterBtnTextActive: { color: theme.colors.accent, fontWeight: '600' },
   summaryCard: {
     flex: 1,
     backgroundColor: theme.colors.glassDark,
