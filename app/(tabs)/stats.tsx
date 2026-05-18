@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginHorizontal: 16,
+    marginTop: 8,
     marginBottom: 8,
   },
   filterRow: {
